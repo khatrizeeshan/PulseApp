@@ -40,7 +40,11 @@ else
             {
                 <tr>
                     <td>@employee.FirstName @employee.LastName</td>
-                    @for (int i = 1; i <= Days; i++)
+                    @for (int i = 1; i < employee.StartDay; i++)
+                    {
+                        <td class="table-secondary"></td>
+                    }
+                    @for (int i = employee.StartDay; i <= Days; i++)
                     {
                         var day = i;
                         employee.Attendance.TryGetValue(i, out TypeCodeCommentsDto detail);

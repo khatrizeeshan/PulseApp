@@ -29,21 +29,22 @@ namespace PulseApp.Data
 
         public async Task<MonthAttendanceDto[]> GetMonthAttendanceAsync(int year, int month)
         {
-            var monthEnd = new DateTime(year, month, DateTime.DaysInMonth(year, month));
+            var start = new DateTime(year, month, 1);
+            var end = new DateTime(year, month, DateTime.DaysInMonth(year, month));
             using var context = DbFactory.CreateDbContext();
 
             var employees = await context.Employees
-                .Where(e => e.Joining <= monthEnd)
+                .Where(e => e.Joining <= end)
                 .Select(EmployeeDto.Selector)
                 .ToArrayAsync();
 
             var attendances = await context.Attendances
-                    .Where(a => a.Date.Month == month && a.Date.Year == year)
+                    .Where(a => a.Date >= start && a.Date <= end)
                     .Select(AttendanceDto.Selector)
                     .ToArrayAsync();
 
             var result = new List<MonthAttendanceDto>();
-            result.Fill(employees, attendances);
+            result.Fill(employees, attendances, start);
             return result.ToArray();
         }
 
@@ -102,6 +103,7 @@ namespace PulseApp.Data
         public int EmployeeId { get; set; }
         public string FirstName { get; set; }
         public string LastName { get; set; }
+        public int StartDay { get; set; }
         public Dictionary<int, TypeCodeCommentsDto> Attendance { get; set; }
     }
 
@@ -114,7 +116,7 @@ namespace PulseApp.Data
 
     public static class AttendanceExtensions
     {
-        public static void Fill(this List<MonthAttendanceDto> destination, EmployeeDto[] employees, AttendanceDto[] attendances)
+        public static void Fill(this List<MonthAttendanceDto> destination, EmployeeDto[] employees, AttendanceDto[] attendances, DateTime start)
         {
             foreach(var employee in employees)
             {
@@ -123,6 +125,7 @@ namespace PulseApp.Data
                     EmployeeId = employee.Id,
                     FirstName = employee.FirstName,
                     LastName = employee.LastName,
+                    StartDay = employee.Joining < start ? 1 : employee.Joining.Day,
                     Attendance = new Dictionary<int, TypeCodeCommentsDto>(),
                 };
 
