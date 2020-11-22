@@ -17,52 +17,61 @@
 }
 else
 {
-    <button @onclick="OnPrevious" type="button" class="btn btn-link">Previous</button>
-    <h2 class="text-right">@MonthName, @Year</h2>
-    <button @onclick="OnNext" type="button" class="btn btn-link">Next</button>
+    <div class="d-flex justify-content-end">
+        <button @onclick="OnPrevious" type="button" class="btn btn-link">Previous</button>
+        <h2 class="text-right">@MonthName, @Year</h2>
+        <button @onclick="OnNext" type="button" class="btn btn-link">Next</button>
+    </div>
 
-    <table class="table table-bordered table-sm">
-        <thead>
-            <tr>
-                <th style="width: 13.2%">Employee</th>
-                @for (int i = 1; i <= Days; i++)
-                {
-                    <th style="width: 2.8%" class="text-center">@i</th>
-                }
-                @for (int i = Days + 1; i <= 31; i++)
-                {
-                    <th style="width: 2.8%" class="table-secondary"></th>
-                }
-            </tr>
-        </thead>
-        <tbody>
-            @foreach (var employee in attendance)
-            {
+    if (attendance.Length > 0)
+    {
+        <table class="table table-bordered table-sm">
+            <thead>
                 <tr>
-                    <td>@employee.FirstName @employee.LastName</td>
-                    @for (int i = 1; i < employee.StartDay; i++)
+                    <th style="width: 13.2%">Employee</th>
+                    @for (int i = 1; i <= Days; i++)
                     {
-                        <td class="table-secondary"></td>
-                    }
-                    @for (int i = employee.StartDay; i <= Days; i++)
-                    {
-                        var day = i;
-                        employee.Attendance.TryGetValue(i, out TypeCodeCommentsDto detail);
-                        <td class="text-center p-0">
-                            <div class="d-flex flex-column align-content-center" style="height: 100%;">
-                                <div style="cursor: pointer;" class="btn-light align-self-stretch" @onclick="async() => await MarkAttendance(employee.EmployeeId, day)"><small>@detail?.TypeCode.</small></div>
-                                <div style="cursor: pointer;" class="mt-auto btn-warning align-self-stretch" @onclick="() => OnShowModal(employee.EmployeeId, day, detail?.TypeId, detail?.Comments)"><small>c</small></div>
-                            </div>
-                        </td>
+                        <th style="width: 2.8%" class="text-center @GetClass(i, "header")">@i</th>
                     }
                     @for (int i = Days + 1; i <= 31; i++)
                     {
-                        <td class="table-secondary"></td>
+                        <th style="width: 2.8%" class="table-secondary"></th>
                     }
                 </tr>
-            }
-        </tbody>
-    </table>
+            </thead>
+            <tbody>
+                @foreach (var employee in attendance)
+                {
+                    <tr>
+                        <td>@employee.FirstName @employee.LastName</td>
+                        @for (int i = 1; i < employee.StartDay; i++)
+                        {
+                            <td class="table-secondary"></td>
+                        }
+                        @for (int i = employee.StartDay; i <= Days; i++)
+                        {
+                            var day = i;
+                            employee.Attendance.TryGetValue(i, out TypeCodeCommentsDto detail);
+                            <td class="text-center p-0">
+                                <div class="d-flex flex-column align-content-center" style="height: 100%;">
+                                    <div style="cursor: pointer;" class="@GetClass(i, "main") align-self-stretch" @onclick="async() => await MarkAttendance(employee.EmployeeId, day)"><small>@detail?.TypeCode.</small></div>
+                                    <div style="cursor: pointer;" class="mt-auto @GetClass(i, "detail") align-self-stretch" @onclick="() => OnShowModal(employee.EmployeeId, day, detail?.TypeId, detail?.Comments)"><small>c</small></div>
+                                </div>
+                            </td>
+                        }
+                        @for (int i = Days + 1; i <= 31; i++)
+                        {
+                            <td class="table-secondary"></td>
+                        }
+                    </tr>
+                }
+            </tbody>
+        </table>
+    }
+    else
+    {
+        <div>No record found for selected month.</div>
+    }
 
     @if (ShowModal && Current != null)
     {
@@ -106,10 +115,15 @@ else
 
     [Parameter]
     public int Year { get; set; }
+
     [Parameter]
     public int Month { get; set; }
 
     private string MonthName { get; set; }
+
+    private int Today { get; set; }
+
+    private int[] OffDays { get; set; }
 
     private DateTime FirstDay { get; set; }
 
@@ -127,13 +141,21 @@ else
     {
         await LoadCurrentMonth();
         await GetAttendanceTypes();
+        await GetOffDays();
     }
 
     private async Task LoadCurrentMonth()
     {
         MonthName = DateTimeHelper.GetMonthName(Month);
-        FirstDay = new DateTime(Year, Month, 1);
+        FirstDay = DateTimeHelper.FirstDay(Year, Month);
         Days = DateTime.DaysInMonth(Year, Month);
+
+        Today = 0;
+        if(DateTimeHelper.IsCurrentMonth(Year, Month))
+        {
+            Today = DateTime.Today.Day;
+        }
+
         await Get();
     }
 
@@ -145,6 +167,11 @@ else
     private async Task GetAttendanceTypes()
     {
         attendanceTypes = await AttendanceService.GetAttenanceTypesAsync();
+    }
+
+    private async Task GetOffDays()
+    {
+        OffDays = DateTimeHelper.WeekDays(Year, Month);
     }
 
     private async Task MarkAttendance(int employeeId, int day)
@@ -212,4 +239,21 @@ else
         ShowModal = false;
     }
 
+    private string GetClass(int day, string position)
+    {
+        switch(position)
+        {
+            case "main":
+                return OffDays.Contains(day) ? "btn-secondary" :
+                                                day == Today ? "btn-info" : "btn-light";
+            case "detail":
+                return OffDays.Contains(day) ? "btn-secondary" :
+                                                day == Today ? "btn-secondary" : "btn-warning";
+            case "header":
+                return OffDays.Contains(day) ? "table-secondary" :
+                                                day == Today ? "table-info" : string.Empty;
+        }
+
+        return string.Empty;
+    }
 }
