@@ -1,0 +1,123 @@
+﻿@page "/attendance/{year:int}/{month:int}"
+
+@using PulseApp.Data
+@using PulseApp.Helpers
+
+@inject NavigationManager NavigationManager
+@inject AttendanceService AttendanceService
+
+<h1>Attendance</h1>
+
+<p>This page shows attendance of the selected day.</p>
+
+@if (attendance == null)
+{
+    <p><em>Loading...</em></p>
+}
+else
+{
+    <button @onclick="OnPrevious" type="button" class="btn btn-link">Previous</button>
+    <h2 class="text-right">@MonthName, @Year</h2>
+    <button @onclick="OnNext" type="button" class="btn btn-link">Next</button>
+
+    <table class="table table-bordered table-sm">
+        <thead>
+            <tr>
+                <th style="width: 13.2%">Employee</th>
+                @for (int i = 1; i <= Days; i++)
+                {
+                    <th style="width: 2.8%" class="text-center">@i</th>
+                }
+                @for (int i = Days + 1; i <= 31; i++)
+                {
+                    <th style="width: 2.8%" class="text-center"></th>
+                }
+
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var employee in attendance)
+            {
+                <tr>
+                    <td>@employee.FirstName @employee.LastName</td>
+                    @for (int i = 1; i <= Days; i++)
+                    {
+                        var day = i;
+                        employee.Attendance.TryGetValue(i, out TypeCodeCommentsDto detail);
+                        <td class="text-center" @onclick="async() => await MarkAttendance(employee.EmployeeId, day)">@detail?.TypeCode</td>
+                    }
+                    @for (int i = Days + 1; i <= 31; i++)
+                    {
+                        <td class="text-center"></td>
+                    }
+                </tr>
+            }
+        </tbody>
+    </table>
+}
+
+@code {
+
+    [Parameter]
+    public int Year { get; set; }
+    [Parameter]
+    public int Month { get; set; }
+
+    private string MonthName { get; set; }
+
+    private DateTime FirstDay { get; set; }
+
+    private int Days { get; set; }
+
+    private MonthAttendanceDto[] attendance;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await Load();
+    }
+
+    private async Task Load()
+    {
+        MonthName = DateTimeHelper.GetMonthName(Month);
+        FirstDay = new DateTime(Year, Month, 1);
+        Days = DateTime.DaysInMonth(Year, Month);
+        await Get();
+    }
+
+    private async Task Get()
+    {
+        attendance = await AttendanceService.GetMonthAttendanceAsync(Year, Month);
+    }
+
+    private async Task MarkAttendance(int employeeId, int day)
+    {
+        await AttendanceService.MarkAttendanceAsync(employeeId, Year, Month, day);
+        await Get();
+    }
+
+    private async Task OnNext()
+    {
+        var date = FirstDay.AddMonths(1);
+        Go(date);
+    }
+
+    private async Task OnPrevious()
+    {
+        var date = FirstDay.AddMonths(-1);
+        await Go(date);
+    }
+
+    private async Task Go(DateTime date)
+    {
+        await Go(date.Year, date.Month);
+    }
+
+    private async Task Go(int year, int month)
+    {
+        NavigationManager.NavigateTo($"/attendance/{year}/{month}");
+        Year = year;
+        Month = month;
+        await Load();
+    }
+
+}
