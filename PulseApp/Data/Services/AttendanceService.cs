@@ -19,12 +19,21 @@ namespace PulseApp.Data
 
         public IDbContextFactory<ApplicationDbContext> DbFactory { get; set; }
 
+        public async Task<AttendanceType[]> GetAttenanceTypesAsync()
+        {
+            using var context = DbFactory.CreateDbContext();
+
+            return await context.AttendanceTypes
+                .ToArrayAsync();
+        }
+
         public async Task<MonthAttendanceDto[]> GetMonthAttendanceAsync(int year, int month)
         {
-            //var from = new DateTime(year, month, 1);
+            var monthEnd = new DateTime(year, month, DateTime.DaysInMonth(year, month));
             using var context = DbFactory.CreateDbContext();
 
             var employees = await context.Employees
+                .Where(e => e.Joining <= monthEnd)
                 .Select(EmployeeDto.Selector)
                 .ToArrayAsync();
 
@@ -38,7 +47,7 @@ namespace PulseApp.Data
             return result.ToArray();
         }
 
-        public async Task MarkAttendanceAsync(int employeeId, int year, int month, int day, int typeId = AttenanceTypes.Full)
+        public async Task MarkAttendanceAsync(int employeeId, int year, int month, int day, int typeId = AttendanceTypes.Full, string comments = null)
         {
             var date = new DateTime(year, month, day);
             using var context = DbFactory.CreateDbContext();
@@ -50,7 +59,8 @@ namespace PulseApp.Data
                 {
                     EmployeeId = employeeId,
                     Date = date,
-                    TypeId = typeId
+                    TypeId = typeId,
+                    Comments = comments,
                 };
                 context.SetId(attendance);
                 await context.Attendances.AddAsync(attendance);
@@ -71,6 +81,8 @@ namespace PulseApp.Data
 
         public int Day { get; set; }
 
+        public int TypeId { get; set; }
+
         public string TypeCode { get; set; }
 
         public string Comments { get; set; }
@@ -79,6 +91,7 @@ namespace PulseApp.Data
         {
             EmployeeId = e.EmployeeId,
             Day = e.Date.Day,
+            TypeId = e.TypeId,
             TypeCode = e.Type.Code,
             Comments = e.Comments,
         };
@@ -94,6 +107,7 @@ namespace PulseApp.Data
 
     public class TypeCodeCommentsDto
     {
+        public int TypeId { get; set; }
         public string TypeCode { get; set; }
         public string Comments { get; set; }
     }
@@ -117,7 +131,7 @@ namespace PulseApp.Data
                     var day = attendances.FirstOrDefault(a => a.EmployeeId == employee.Id && a.Day == i);
                     if(day != null)
                     {
-                        month.Attendance.Add(i, new TypeCodeCommentsDto() { TypeCode = day.TypeCode, Comments = day.Comments });
+                        month.Attendance.Add(i, new TypeCodeCommentsDto() { TypeId = day.TypeId, TypeCode = day.TypeCode, Comments = day.Comments });
                     }
                 }
 

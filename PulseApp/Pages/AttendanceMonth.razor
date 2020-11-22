@@ -2,6 +2,7 @@
 
 @using PulseApp.Data
 @using PulseApp.Helpers
+@using PulseApp.Constants
 
 @inject NavigationManager NavigationManager
 @inject AttendanceService AttendanceService
@@ -44,9 +45,9 @@ else
                         var day = i;
                         employee.Attendance.TryGetValue(i, out TypeCodeCommentsDto detail);
                         <td class="text-center p-0">
-                            <div class="d-flex flex-column align-content-center m-0" style="height: 100%;">
-                                <div class="p-0 align-self-stretch" @onclick="async() => await MarkAttendance(employee.EmployeeId, day)"><small>@detail?.TypeCode.</small></div>
-                                <div class="mt-auto btn-warning align-self-stretch"><small>c</small></div>
+                            <div class="d-flex flex-column align-content-center" style="height: 100%;">
+                                <div style="cursor: pointer;" class="btn-light align-self-stretch" @onclick="async() => await MarkAttendance(employee.EmployeeId, day)"><small>@detail?.TypeCode.</small></div>
+                                <div style="cursor: pointer;" class="mt-auto btn-warning align-self-stretch" @onclick="() => OnShowModal(employee.EmployeeId, day, detail?.TypeId, detail?.Comments)"><small>c</small></div>
                             </div>
                         </td>
                     }
@@ -58,6 +59,43 @@ else
             }
         </tbody>
     </table>
+
+    @if (ShowModal && Current != null)
+    {
+        <div class="modal fade show" id="myModal" style="display:block" aria-modal="true" role="dialog">
+            <div class="modal-dialog">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h4 class="modal-title">Mark Attendance</h4>
+                        <button type="button" class="close" @onclick="OnCancelModal">&times;</button>
+                    </div>
+
+                    <div class="modal-body">
+                        <div class="form-group">
+                            <label for="attendanceType">Attendance Type:</label>
+                            <select @bind="SelectedTypeId" class="form-control" id="attendanceType">
+                                @foreach (var type in attendanceTypes)
+                                {
+                                    <option value="@type.Id">@type.Code - @type.Name</option>
+                                }
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label for="comments">Comments</label>
+                            <textarea @bind="Current.Comments" class="form-control" id="comments" rows="3"></textarea>
+                        </div>
+                    </div>
+
+                    <div class="modal-footer">
+                        <button type="button" class="btn" @onclick="@OnCancelModal">Cancel</button>
+                        <button type="button" class="btn btn-primary" @onclick=@OnConfirmModal>Save</button>
+                    </div>
+
+                </div>
+            </div>
+        </div>
+    }
+
 }
 
 @code {
@@ -74,13 +112,20 @@ else
     private int Days { get; set; }
 
     private MonthAttendanceDto[] attendance;
+    private AttendanceType[] attendanceTypes;
+
+    private bool ShowModal { get; set; }
+
+    private AttendanceDto Current { get; set; }
+    private string SelectedTypeId { get; set; }
 
     protected override async Task OnInitializedAsync()
     {
-        await Load();
+        await LoadCurrentMonth();
+        await GetAttendanceTypes();
     }
 
-    private async Task Load()
+    private async Task LoadCurrentMonth()
     {
         MonthName = DateTimeHelper.GetMonthName(Month);
         FirstDay = new DateTime(Year, Month, 1);
@@ -93,16 +138,27 @@ else
         attendance = await AttendanceService.GetMonthAttendanceAsync(Year, Month);
     }
 
+    private async Task GetAttendanceTypes()
+    {
+        attendanceTypes = await AttendanceService.GetAttenanceTypesAsync();
+    }
+
     private async Task MarkAttendance(int employeeId, int day)
     {
         await AttendanceService.MarkAttendanceAsync(employeeId, Year, Month, day);
         await Get();
     }
 
+    private async Task MarkAttendance(AttendanceDto attendance)
+    {
+        await AttendanceService.MarkAttendanceAsync(attendance.EmployeeId, Year, Month, attendance.Day, attendance.TypeId, attendance.Comments);
+        await Get();
+    }
+
     private async Task OnNext()
     {
         var date = FirstDay.AddMonths(1);
-        Go(date);
+        await Go(date);
     }
 
     private async Task OnPrevious()
@@ -121,7 +177,35 @@ else
         NavigationManager.NavigateTo($"/attendance/{year}/{month}");
         Year = year;
         Month = month;
-        await Load();
+        await LoadCurrentMonth();
+    }
+
+    private void OnShowModal(int employeeId, int day, int? typeId, string comments = null)
+    {
+        Current = new AttendanceDto
+        {
+            EmployeeId = employeeId,
+            Day = day,
+            TypeId = typeId.GetValueOrDefault(AttendanceTypes.Full),
+            Comments = comments,
+        };
+
+        SelectedTypeId = Current.TypeId.ToString();
+        ShowModal = true;
+    }
+
+    private void OnCancelModal()
+    {
+        SelectedTypeId = null;
+        Current = null;
+        ShowModal = false;
+    }
+
+    private async Task OnConfirmModal()
+    {
+        Current.TypeId = int.Parse(SelectedTypeId);
+        await MarkAttendance(Current);
+        ShowModal = false;
     }
 
 }

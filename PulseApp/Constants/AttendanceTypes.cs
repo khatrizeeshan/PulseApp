@@ -1,6 +1,6 @@
 ﻿namespace PulseApp.Constants
 {
-    public static class AttenanceTypes
+    public static class AttendanceTypes
     {
         public const int Full = 0;
         public const int Late = 1;
