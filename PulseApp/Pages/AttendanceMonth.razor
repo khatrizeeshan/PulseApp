@@ -30,9 +30,8 @@ else
                 }
                 @for (int i = Days + 1; i <= 31; i++)
                 {
-                    <th style="width: 2.8%" class="text-center"></th>
+                    <th style="width: 2.8%" class="table-secondary"></th>
                 }
-
             </tr>
         </thead>
         <tbody>
@@ -44,11 +43,16 @@ else
                     {
                         var day = i;
                         employee.Attendance.TryGetValue(i, out TypeCodeCommentsDto detail);
-                        <td class="text-center" @onclick="async() => await MarkAttendance(employee.EmployeeId, day)">@detail?.TypeCode</td>
+                        <td class="text-center p-0">
+                            <div class="d-flex flex-column align-content-center m-0" style="height: 100%;">
+                                <div class="p-0 align-self-stretch" @onclick="async() => await MarkAttendance(employee.EmployeeId, day)"><small>@detail?.TypeCode.</small></div>
+                                <div class="mt-auto btn-warning align-self-stretch"><small>c</small></div>
+                            </div>
+                        </td>
                     }
                     @for (int i = Days + 1; i <= 31; i++)
                     {
-                        <td class="text-center"></td>
+                        <td class="table-secondary"></td>
                     }
                 </tr>
             }
