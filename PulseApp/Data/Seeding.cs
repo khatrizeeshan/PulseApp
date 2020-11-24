@@ -9,14 +9,18 @@ namespace PulseApp.Data
     {
         private static readonly AttendanceType[] AttendanceTypeList = new AttendanceType[]
 {
-            new AttendanceType() { Id = AttendanceTypes.Full, Code = "FD", Name = "Full Day", IsDefault = true },
-            new AttendanceType() { Id = AttendanceTypes.Late, Code = "LT", Name = "Late", IsDefault = true },
-            new AttendanceType() { Id = AttendanceTypes.Half, Code = "HD", Name = "Half Day", IsDefault = true },
-            new AttendanceType() { Id = AttendanceTypes.LeaveCasual, Code = "CL", Name = "Casual Leave", IsDefault = true },
-            new AttendanceType() { Id = AttendanceTypes.LeaveSick, Code = "SL", Name = "Sick Leave", IsDefault = true },
-            new AttendanceType() { Id = AttendanceTypes.LeaveAnnual, Code = "AL", Name = "Annual Leave", IsDefault = true },
-            new AttendanceType() { Id = AttendanceTypes.LeavePaid, Code = "PL", Name = "Paid Leave", IsDefault = true },
-            new AttendanceType() { Id = AttendanceTypes.LeaveUnpaid, Code = "UL", Name = "Unpaid Leave", IsDefault = true },
+            new AttendanceType() { Id = AttendanceTypes.Full, Code = "F", Name = "Full", IsDefault = true },
+            new AttendanceType() { Id = AttendanceTypes.Late, Code = "T", Name = "Late", IsDefault = true },
+            new AttendanceType() { Id = AttendanceTypes.Half, Code = "H", Name = "Half", IsDefault = true },
+            new AttendanceType() { Id = AttendanceTypes.Leave, Code = "L", Name = "Leave", IsDefault = true },
+        };
+
+        private static readonly LeaveType[] LeaveTypeList = new LeaveType[]
+        {
+            new LeaveType() { Id = LeaveTypes.Casual, Code = "C", Name = "Casual", IsDefault = true },
+            new LeaveType() { Id = LeaveTypes.Sick, Code = "S", Name = "Sick", IsDefault = true },
+            new LeaveType() { Id = LeaveTypes.Earned, Code = "E", Name = "Annual", IsDefault = true },
+            new LeaveType() { Id = LeaveTypes.Paid, Code = "D", Name = "Paid", IsDefault = true },
         };
 
         private static readonly Employee[] EmployeeList = new Employee[]
@@ -30,6 +34,7 @@ namespace PulseApp.Data
         public static async Task Run(ApplicationDbContext context)
         {
             await context.AddRangeAsync(AttendanceTypeList);
+            await context.AddRangeAsync(LeaveTypeList);
             await context.AddRangeAsync(context.SetId(EmployeeList));
             await context.SaveChangesAsync();
         }

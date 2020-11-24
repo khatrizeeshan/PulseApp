@@ -21,6 +21,7 @@ namespace PulseApp.Data
         public DbSet<Employee> Employees { get; set; }
         public DbSet<Attendance> Attendances { get; set; }
         public DbSet<AttendanceType> AttendanceTypes { get; set; }
+        public DbSet<LeaveType> LeaveTypes { get; set; }
         public DbSet<Timing> Timings { get; set; }
         public DbSet<User> Users { get; set; }
     }

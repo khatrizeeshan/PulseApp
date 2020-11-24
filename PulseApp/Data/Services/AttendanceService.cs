@@ -19,11 +19,19 @@ namespace PulseApp.Data
 
         public IDbContextFactory<ApplicationDbContext> DbFactory { get; set; }
 
-        public async Task<AttendanceType[]> GetAttenanceTypesAsync()
+        public async Task<AttendanceType[]> GetAttendanceTypesAsync()
         {
             using var context = DbFactory.CreateDbContext();
 
             return await context.AttendanceTypes
+                .ToArrayAsync();
+        }
+
+        public async Task<LeaveType[]> GetLeaveTypesAsync()
+        {
+            using var context = DbFactory.CreateDbContext();
+
+            return await context.LeaveTypes
                 .ToArrayAsync();
         }
 
@@ -48,7 +56,8 @@ namespace PulseApp.Data
             return result.ToArray();
         }
 
-        public async Task MarkAttendanceAsync(int employeeId, int year, int month, int day, int typeId = AttendanceTypes.Full, string comments = null)
+        public async Task MarkAttendanceAsync(int employeeId, int year, int month, int day, 
+            int attendanceTypeId = AttendanceTypes.Full, int? leaveTypeId = null, string comments = null)
         {
             var date = new DateTime(year, month, day);
             using var context = DbFactory.CreateDbContext();
@@ -60,15 +69,18 @@ namespace PulseApp.Data
                 {
                     EmployeeId = employeeId,
                     Date = date,
-                    TypeId = typeId,
+                    AttendanceTypeId = attendanceTypeId,
                     Comments = comments,
                 };
+
+                attendance.SetLeaveTypeId(leaveTypeId);
                 context.SetId(attendance);
                 await context.Attendances.AddAsync(attendance);
             }
             else
             {
-                attendance.TypeId = typeId;
+                attendance.AttendanceTypeId = attendanceTypeId;
+                attendance.SetLeaveTypeId(leaveTypeId);
                 context.Attendances.Update(attendance);
             }
 
@@ -82,9 +94,13 @@ namespace PulseApp.Data
 
         public int Day { get; set; }
 
-        public int TypeId { get; set; }
+        public int AttendanceTypeId { get; set; }
 
-        public string TypeCode { get; set; }
+        public string AttendanceTypeCode { get; set; }
+
+        public int? LeaveTypeId { get; set; }
+
+        public string LeaveTypeCode { get; set; }
 
         public string Comments { get; set; }
 
@@ -92,8 +108,10 @@ namespace PulseApp.Data
         {
             EmployeeId = e.EmployeeId,
             Day = e.Date.Day,
-            TypeId = e.TypeId,
-            TypeCode = e.Type.Code,
+            AttendanceTypeId = e.AttendanceTypeId,
+            AttendanceTypeCode = e.AttendanceType.Code,
+            LeaveTypeId = e.LeaveTypeId,
+            LeaveTypeCode = e.LeaveType.Code,
             Comments = e.Comments,
         };
     }
@@ -104,13 +122,15 @@ namespace PulseApp.Data
         public string FirstName { get; set; }
         public string LastName { get; set; }
         public int StartDay { get; set; }
-        public Dictionary<int, TypeCodeCommentsDto> Attendance { get; set; }
+        public Dictionary<int, DayAttendanceDetailDto> Attendance { get; set; }
     }
 
-    public class TypeCodeCommentsDto
+    public class DayAttendanceDetailDto
     {
-        public int TypeId { get; set; }
-        public string TypeCode { get; set; }
+        public int AttendanceTypeId { get; set; }
+        public string AttendanceTypeCode { get; set; }
+        public int? LeaveTypeId { get; set; }
+        public string LeaveTypeCode { get; set; }
         public string Comments { get; set; }
     }
 
@@ -126,7 +146,7 @@ namespace PulseApp.Data
                     FirstName = employee.FirstName,
                     LastName = employee.LastName,
                     StartDay = employee.Joining < start ? 1 : employee.Joining.Day,
-                    Attendance = new Dictionary<int, TypeCodeCommentsDto>(),
+                    Attendance = new Dictionary<int, DayAttendanceDetailDto>(),
                 };
 
                 for(int i = 0; i <= 31; i++)
@@ -134,12 +154,34 @@ namespace PulseApp.Data
                     var day = attendances.FirstOrDefault(a => a.EmployeeId == employee.Id && a.Day == i);
                     if(day != null)
                     {
-                        month.Attendance.Add(i, new TypeCodeCommentsDto() { TypeId = day.TypeId, TypeCode = day.TypeCode, Comments = day.Comments });
+                        month.Attendance.Add(i, new DayAttendanceDetailDto() { 
+                            AttendanceTypeId = day.AttendanceTypeId, 
+                            AttendanceTypeCode = day.AttendanceTypeCode,
+                            LeaveTypeId = day.LeaveTypeId,
+                            LeaveTypeCode = day.LeaveTypeCode,
+                            Comments = day.Comments 
+                        });
                     }
                 }
 
                 destination.Add(month);
             }
+        }
+
+        public static void SetLeaveTypeId(this Attendance attendance, int? leaveTypeId)
+        {
+            attendance.LeaveTypeId = null;
+
+            if (attendance.AttendanceTypeId == AttendanceTypes.Leave)
+            {
+                if(leaveTypeId == null)
+                {
+                    throw new Exception("Leave Type is not specified.");
+                }
+
+                attendance.LeaveTypeId = leaveTypeId;
+            }
+            
         }
     }
 }

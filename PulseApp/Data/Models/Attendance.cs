@@ -9,8 +9,10 @@ namespace PulseApp.Data
         public int EmployeeId { get; set; }
         public Employee Employee { get; set; }
         public DateTime Date { get; set; }
-        public int TypeId { get; set; }
-        public AttendanceType Type { get; set; }
+        public int AttendanceTypeId { get; set; }
+        public AttendanceType AttendanceType { get; set; }
+        public int? LeaveTypeId { get; set; }
+        public LeaveType LeaveType { get; set; }
         public int Hours { get; set; }
         public string Comments { get; set; }
 
