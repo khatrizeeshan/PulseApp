@@ -37,6 +37,7 @@ else
                     <td>
                         <button type="button" @onclick="(() => OnEdit(employee.Id))">Edit</button>
                         <button type="button" @onclick="(() => OnDelete(employee.Id))">Delete</button>
+                        <button type="button" @onclick="(() => OnAttendance(employee.Id))">Attendance</button>
                     </td>
                 </tr>
             }
@@ -88,8 +89,18 @@ else
         GoAtEmployee(0);
     }
 
+    private async Task OnAttendance(int id)
+    {
+        GoAtAttendance(id);
+    }
+
     private void GoAtEmployee(int id)
     {
         NavigationManager.NavigateTo($"/employees/{id}");
+    }
+
+    private void GoAtAttendance(int id)
+    {
+        NavigationManager.NavigateTo($"/employees/{id}/attendance/{DateTime.Today.Year}");
     }
 }
