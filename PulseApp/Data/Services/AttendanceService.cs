@@ -56,6 +56,37 @@ namespace PulseApp.Data
             return result.ToArray();
         }
 
+        public async Task<EmployeeAttendanceDto[]> GetYearAttendanceAsync(int employeeId, int year)
+        {
+            var end = new DateTime(year, 12, 31);
+            using var context = DbFactory.CreateDbContext();
+
+            var employee = await context.Employees
+                .Where(e => e.Id == employeeId && e.Joining <= end)
+                .Select(EmployeeDto.Selector)
+                .SingleOrDefaultAsync();
+
+            if(employee == null)
+            {
+                return Array.Empty<EmployeeAttendanceDto>();
+            }
+
+            var start = new DateTime(year, 1, 1);
+            if (employee.Joining > start)
+            {
+                start = employee.Joining;
+            }
+
+            var attendances = await context.Attendances
+                    .Where(a => a.EmployeeId == employeeId && a.Date >= start && a.Date <= end)
+                    .Select(AttendanceDto.Selector)
+                    .ToArrayAsync();
+
+            var result = new List<EmployeeAttendanceDto>();
+            result.Fill(employee, attendances, start);
+            return result.ToArray();
+        }
+
         public async Task MarkAttendanceAsync(int employeeId, int year, int month, int day, 
             int attendanceTypeId = AttendanceTypes.Full, int? leaveTypeId = null, string comments = null)
         {
@@ -94,6 +125,8 @@ namespace PulseApp.Data
 
         public int Day { get; set; }
 
+        public int Month { get; set; }
+
         public int AttendanceTypeId { get; set; }
 
         public string AttendanceTypeCode { get; set; }
@@ -108,6 +141,7 @@ namespace PulseApp.Data
         {
             EmployeeId = e.EmployeeId,
             Day = e.Date.Day,
+            Month = e.Date.Month,
             AttendanceTypeId = e.AttendanceTypeId,
             AttendanceTypeCode = e.AttendanceType.Code,
             LeaveTypeId = e.LeaveTypeId,
@@ -122,6 +156,16 @@ namespace PulseApp.Data
         public string FirstName { get; set; }
         public string LastName { get; set; }
         public int StartDay { get; set; }
+        public Dictionary<int, DayAttendanceDetailDto> Attendance { get; set; }
+    }
+
+    public class EmployeeAttendanceDto
+    {
+        public int Month { get; set; }
+        public string MonthName { get; set; }
+        public int StartDay { get; set; }
+        public int[] OffDays { get; set; }
+        public int Days { get; set; }
         public Dictionary<int, DayAttendanceDetailDto> Attendance { get; set; }
     }
 
@@ -140,7 +184,7 @@ namespace PulseApp.Data
         {
             foreach(var employee in employees)
             {
-                var month = new MonthAttendanceDto()
+                var dto = new MonthAttendanceDto()
                 {
                     EmployeeId = employee.Id,
                     FirstName = employee.FirstName,
@@ -154,7 +198,7 @@ namespace PulseApp.Data
                     var day = attendances.FirstOrDefault(a => a.EmployeeId == employee.Id && a.Day == i);
                     if(day != null)
                     {
-                        month.Attendance.Add(i, new DayAttendanceDetailDto() { 
+                        dto.Attendance.Add(i, new DayAttendanceDetailDto() { 
                             AttendanceTypeId = day.AttendanceTypeId, 
                             AttendanceTypeCode = day.AttendanceTypeCode,
                             LeaveTypeId = day.LeaveTypeId,
@@ -164,7 +208,42 @@ namespace PulseApp.Data
                     }
                 }
 
-                destination.Add(month);
+                destination.Add(dto);
+            }
+        }
+
+        public static void Fill(this List<EmployeeAttendanceDto> destination, EmployeeDto employee, AttendanceDto[] attendances, DateTime start)
+        {
+            for(int month = start.Month; month <= 12; month++)
+            {
+                var firstDay = DateTimeHelper.FirstDay(start.Year, month);
+                var dto = new EmployeeAttendanceDto()
+                {
+                    Month = month,
+                    MonthName = DateTimeHelper.GetMonthName(month),
+                    Days = DateTime.DaysInMonth(start.Year, month),
+                    OffDays = DateTimeHelper.WeekDays(start.Year, month),
+                    StartDay = employee.Joining < firstDay ? 1 : employee.Joining.Day,
+                    Attendance = new Dictionary<int, DayAttendanceDetailDto>(),
+                };
+
+                for (int i = 0; i <= 31; i++)
+                {
+                    var day = attendances.FirstOrDefault(a => a.Month == month && a.Day == i);
+                    if (day != null)
+                    {
+                        dto.Attendance.Add(i, new DayAttendanceDetailDto()
+                        {
+                            AttendanceTypeId = day.AttendanceTypeId,
+                            AttendanceTypeCode = day.AttendanceTypeCode,
+                            LeaveTypeId = day.LeaveTypeId,
+                            LeaveTypeCode = day.LeaveTypeCode,
+                            Comments = day.Comments
+                        });
+                    }
+                }
+
+                destination.Add(dto);
             }
         }
 

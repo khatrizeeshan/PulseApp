@@ -1,4 +1,4 @@
-﻿@page "/attendance/{year:int}/{month:int}"
+﻿@page "/employees/{id:int}/attendance/{year:int}"
 
 @using PulseApp.Data
 @using PulseApp.Helpers
@@ -9,7 +9,7 @@
 
 <h1>Attendance</h1>
 
-<p>This page shows attendance of all employees for the selected month.</p>
+<p>This page shows attendance of an employee for the selected year.</p>
 
 @if (Attendance == null)
 {
@@ -19,64 +19,66 @@ else
 {
     <div class="d-flex justify-content-end">
         <button @onclick="OnPrevious" type="button" class="btn btn-link">Previous</button>
-        <h2 class="text-right">@MonthName, @Year</h2>
+        <h2 class="text-right">@Year</h2>
         <button @onclick="OnNext" type="button" class="btn btn-link">Next</button>
     </div>
 
     if (Attendance.Length > 0)
     {
-        <table class="table table-bordered table-sm">
-            <thead>
-                <tr>
-                    <th style="width: 13.2%">Employee</th>
-                    @for (int i = 1; i <= Days; i++)
-                    {
-                        <th style="width: 2.8%" class="text-center @GetClass(i, "header")">@i</th>
-                    }
-                    @for (int i = Days + 1; i <= 31; i++)
-                    {
-                        <th style="width: 2.8%" class="table-secondary"></th>
-                    }
-                </tr>
-            </thead>
-            <tbody>
-                @foreach (var employee in Attendance)
-                {
+
+        @foreach (var month in Attendance)
+        {
+            <table class="table table-bordered table-sm">
+                <thead>
                     <tr>
-                        <td>@employee.FirstName @employee.LastName</td>
-                        @for (int i = 1; i < employee.StartDay; i++)
+                        <th style="width: 13.2%">Month</th>
+                        @for (int i = 1; i <= month.Days; i++)
+                        {
+                            <th style="width: 2.8%" class="text-center @GetClass(month.OffDays, i, "header")">@i</th>
+                        }
+                        @for (int i = month.Days + 1; i <= 31; i++)
+                        {
+                            <th style="width: 2.8%" class="table-secondary"></th>
+                        }
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>@month.MonthName</td>
+                        @for (int i = 1; i < month.StartDay; i++)
                         {
                             <td class="table-secondary"></td>
                         }
-                        @for (int i = employee.StartDay; i <= Days; i++)
+                        @for (int i = month.StartDay; i <= month.Days; i++)
                         {
                             var day = i;
-                            employee.Attendance.TryGetValue(i, out DayAttendanceDetailDto detail);
+                            month.Attendance.TryGetValue(i, out DayAttendanceDetailDto detail);
                             <td class="text-center p-0">
                                 <div class="d-flex flex-column align-content-center" style="height: 100%;">
-                                    <div style="cursor: pointer;" class="@GetClass(i, "main") align-self-stretch"
-                                         @onclick="async() => await MarkAttendance(employee.EmployeeId, day)">
+                                    <div style="cursor: pointer;" class="@GetClass(month.OffDays, i, "main") align-self-stretch"
+                                         @onclick="async() => await MarkAttendance(Id, month.Month, day)">
                                         <small>@detail?.LeaveTypeCode@detail?.AttendanceTypeCode.</small>
                                     </div>
-                                    <div style="cursor: pointer;" class="mt-auto @GetClass(i, "detail") align-self-stretch"
-                                         @onclick="() => OnShowModal(employee.EmployeeId, day, detail?.AttendanceTypeId,  detail?.LeaveTypeId, detail?.Comments)">
+                                    <div style="cursor: pointer;" class="mt-auto @GetClass(month.OffDays, i, "detail") align-self-stretch"
+                                         @onclick="() => OnShowModal(Id, day, detail?.AttendanceTypeId,  detail?.LeaveTypeId, detail?.Comments)">
                                         <small>c</small>
                                     </div>
                                 </div>
                             </td>
                         }
-                        @for (int i = Days + 1; i <= 31; i++)
+                        @for (int i = month.Days + 1; i <= 31; i++)
                         {
                             <td class="table-secondary"></td>
                         }
                     </tr>
-                }
-            </tbody>
-        </table>
+                </tbody>
+            </table>
+        }
+
     }
     else
     {
-        <div>No record found for selected month.</div>
+        <div>No record found for selected year.</div>
     }
 
     @if (ShowModal && Current != null)
@@ -132,22 +134,12 @@ else
 @code {
 
     [Parameter]
-    public int Year { get; set; }
+    public int Id { get; set; }
 
     [Parameter]
-    public int Month { get; set; }
+    public int Year { get; set; }
 
-    private string MonthName { get; set; }
-
-    private int Today { get; set; }
-
-    private int[] OffDays { get; set; }
-
-    private DateTime FirstDay { get; set; }
-
-    private int Days { get; set; }
-
-    private MonthAttendanceDto[] Attendance { get; set; }
+    private EmployeeAttendanceDto[] Attendance { get; set; }
     private AttendanceType[] AttendanceTypeList { get; set; }
     private LeaveType[] LeaveTypeList { get; set; }
 
@@ -164,27 +156,16 @@ else
         await LoadCurrentMonth();
         await GetAttendanceTypes();
         await GetLeaveTypes();
-        await GetOffDays();
     }
 
     private async Task LoadCurrentMonth()
     {
-        MonthName = DateTimeHelper.GetMonthName(Month);
-        FirstDay = DateTimeHelper.FirstDay(Year, Month);
-        Days = DateTime.DaysInMonth(Year, Month);
-
-        Today = 0;
-        if (DateTimeHelper.IsCurrentMonth(Year, Month))
-        {
-            Today = DateTime.Today.Day;
-        }
-
         await Get();
     }
 
     private async Task Get()
     {
-        Attendance = await AttendanceService.GetMonthAttendanceAsync(Year, Month);
+        Attendance = await AttendanceService.GetYearAttendanceAsync(Id, Year);
     }
 
     private async Task GetAttendanceTypes()
@@ -197,45 +178,32 @@ else
         LeaveTypeList = await AttendanceService.GetLeaveTypesAsync();
     }
 
-    private async Task GetOffDays()
+    private async Task MarkAttendance(int employeeId, int month, int day)
     {
-        OffDays = DateTimeHelper.WeekDays(Year, Month);
-    }
-
-    private async Task MarkAttendance(int employeeId, int day)
-    {
-        await AttendanceService.MarkAttendanceAsync(employeeId, Year, Month, day);
+        await AttendanceService.MarkAttendanceAsync(employeeId, Year, month, day);
         await Get();
     }
 
     private async Task MarkAttendance(AttendanceDto attendance)
     {
-        await AttendanceService.MarkAttendanceAsync(attendance.EmployeeId, Year, Month, attendance.Day, attendance.AttendanceTypeId, attendance.LeaveTypeId, attendance.Comments);
+        await AttendanceService.MarkAttendanceAsync(attendance.EmployeeId, Year, attendance.Month, attendance.Day, attendance.AttendanceTypeId, attendance.LeaveTypeId, attendance.Comments);
         await Get();
     }
 
     private async Task OnNext()
     {
-        var date = FirstDay.AddMonths(1);
-        await Go(date);
+        await Go(Year + 1);
     }
 
     private async Task OnPrevious()
     {
-        var date = FirstDay.AddMonths(-1);
-        await Go(date);
+        await Go(Year - 1);
     }
 
-    private async Task Go(DateTime date)
+    private async Task Go(int year)
     {
-        await Go(date.Year, date.Month);
-    }
-
-    private async Task Go(int year, int month)
-    {
-        NavigationManager.NavigateTo($"/attendance/{year}/{month}");
+        NavigationManager.NavigateTo($"/employees/{Id}/attendance/{year}");
         Year = year;
-        Month = month;
         await LoadCurrentMonth();
     }
 
@@ -272,19 +240,22 @@ else
         ShowModal = false;
     }
 
-    private string GetClass(int day, string position)
+    private string GetClass(int[] offDays, int day, string position)
     {
         switch (position)
         {
             case "main":
-                return OffDays.Contains(day) ? "btn-secondary" :
-                                                day == Today ? "btn-info" : "btn-light";
+                return offDays.Contains(day) ? "btn-secondary" :
+                                                //day == today ? "btn-info" :
+                                                "btn-light";
             case "detail":
-                return OffDays.Contains(day) ? "btn-secondary" :
-                                                day == Today ? "btn-secondary" : "btn-warning";
+                return offDays.Contains(day) ? "btn-secondary" :
+                                                //day == today ? "btn-secondary" :
+                                                "btn-warning";
             case "header":
-                return OffDays.Contains(day) ? "table-secondary" :
-                                                day == Today ? "table-info" : string.Empty;
+                return offDays.Contains(day) ? "table-secondary" :
+                                                //day == today ? "table-info" :
+                                                string.Empty;
         }
 
         return string.Empty;
