@@ -127,6 +127,8 @@ namespace PulseApp.Data
 
         public int Month { get; set; }
 
+        public int Year { get; set; }
+
         public int AttendanceTypeId { get; set; }
 
         public string AttendanceTypeCode { get; set; }

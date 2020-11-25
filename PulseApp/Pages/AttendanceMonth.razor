@@ -81,50 +81,7 @@ else
 
     @if (ShowModal && Current != null)
     {
-        <div class="modal fade show" id="myModal" style="display:block" aria-modal="true" role="dialog">
-            <div class="modal-dialog">
-                <div class="modal-content">
-                    <div class="modal-header">
-                        <h4 class="modal-title">Mark Attendance</h4>
-                        <button type="button" class="close" @onclick="OnCancelModal">&times;</button>
-                    </div>
-
-                    <div class="modal-body">
-                        <div class="form-group">
-                            <label for="attendanceType">Attendance Type:</label>
-                            <select @bind="SelectedAttendanceTypeId" class="form-control" id="attendanceType">
-                                @foreach (var type in AttendanceTypeList)
-                                {
-                                    <option value="@type.Id">@type.Code - @type.Name</option>
-                                }
-                            </select>
-                        </div>
-                        @if (SelectedAttendanceTypeId == AttendanceTypes.Leave.ToString())
-                        {
-                            <div class="form-group">
-                                <label for="leaveType">Leave Type:</label>
-                                <select @bind="SelectedLeaveTypeId" class="form-control" id="leaveType">
-                                    @foreach (var type in LeaveTypeList)
-                                    {
-                                        <option value="@type.Id">@type.Code - @type.Name</option>
-                                    }
-                                </select>
-                            </div>
-                        }
-                        <div class="form-group">
-                            <label for="comments">Comments</label>
-                            <textarea @bind="Current.Comments" class="form-control" id="comments" rows="3"></textarea>
-                        </div>
-                    </div>
-
-                    <div class="modal-footer">
-                        <button type="button" class="btn" @onclick="@OnCancelModal">Cancel</button>
-                        <button type="button" class="btn btn-primary" @onclick=@OnConfirmModal>Save</button>
-                    </div>
-
-                </div>
-            </div>
-        </div>
+        <Attendance Current="Current" OnCancelCallback="OnCancelModal" OnConfirmCallback="OnConfirmModal"></Attendance>
     }
 
 }
@@ -148,22 +105,15 @@ else
     private int Days { get; set; }
 
     private MonthAttendanceDto[] Attendance { get; set; }
-    private AttendanceType[] AttendanceTypeList { get; set; }
-    private LeaveType[] LeaveTypeList { get; set; }
 
     private bool ShowModal { get; set; }
 
     private AttendanceDto Current { get; set; }
 
-    private string SelectedAttendanceTypeId { get; set; }
-
-    private string SelectedLeaveTypeId { get; set; }
 
     protected override async Task OnInitializedAsync()
     {
         await LoadCurrentMonth();
-        await GetAttendanceTypes();
-        await GetLeaveTypes();
         await GetOffDays();
     }
 
@@ -185,16 +135,6 @@ else
     private async Task Get()
     {
         Attendance = await AttendanceService.GetMonthAttendanceAsync(Year, Month);
-    }
-
-    private async Task GetAttendanceTypes()
-    {
-        AttendanceTypeList = await AttendanceService.GetAttendanceTypesAsync();
-    }
-
-    private async Task GetLeaveTypes()
-    {
-        LeaveTypeList = await AttendanceService.GetLeaveTypesAsync();
     }
 
     private async Task GetOffDays()
@@ -245,29 +185,24 @@ else
         {
             EmployeeId = employeeId,
             Day = day,
+            Month = Month,
+            Year = Year,
             AttendanceTypeId = attendanceTypeId.GetValueOrDefault(Constants.AttendanceTypes.Full),
             LeaveTypeId = leaveTypeId.GetValueOrDefault(Constants.LeaveTypes.Casual),
             Comments = comments,
         };
 
-        SelectedAttendanceTypeId = Current.AttendanceTypeId.ToString();
-        SelectedLeaveTypeId = Current.LeaveTypeId.ToString();
         ShowModal = true;
     }
 
     private void OnCancelModal()
     {
-        SelectedAttendanceTypeId = null;
-        SelectedLeaveTypeId = null;
         Current = null;
         ShowModal = false;
     }
 
     private async Task OnConfirmModal()
     {
-        Current.AttendanceTypeId = int.Parse(SelectedAttendanceTypeId);
-        Current.LeaveTypeId = int.Parse(SelectedLeaveTypeId);
-
         await MarkAttendance(Current);
         ShowModal = false;
     }
