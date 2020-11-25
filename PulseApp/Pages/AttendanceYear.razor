@@ -6,6 +6,7 @@
 @using PulseApp.Pages
 
 @inject NavigationManager NavigationManager
+@inject EmployeeService EmployeeService
 @inject AttendanceService AttendanceService
 
 <h1>Attendance</h1>
@@ -18,6 +19,17 @@
 }
 else
 {
+    <div class="d-flex justify-content-start">
+        <div class="form-group">
+            <label for="attendanceType">Employee:</label>
+            <select @bind="SelectedEmployeeId" @bind:event="oninput" @onchange="OnChangeEmployee" class="form-control" id="employee">
+                @foreach (var employee in EmployeeList)
+                {
+                    <option value="@employee.Id">@employee.FirstName @employee.LastName</option>
+                }
+            </select>
+        </div>
+    </div>
     <div class="d-flex justify-content-end">
         <button @onclick="OnPrevious" type="button" class="btn btn-link">Previous</button>
         <h2 class="text-right">@Year</h2>
@@ -92,7 +104,11 @@ else
     [Parameter]
     public int Year { get; set; }
 
+    private EmployeeDto[] EmployeeList { get; set; }
+
     private EmployeeAttendanceDto[] Attendance { get; set; }
+
+    private string SelectedEmployeeId { get; set; }
 
     private bool ShowModal { get; set; }
 
@@ -100,10 +116,13 @@ else
 
     protected override async Task OnInitializedAsync()
     {
-        await LoadCurrentMonth();
+        await GetEmployees();
+        await LoadCurrentYear();
+
+        SelectedEmployeeId = Id.ToString();
     }
 
-    private async Task LoadCurrentMonth()
+    private async Task LoadCurrentYear()
     {
         await Get();
     }
@@ -112,6 +131,12 @@ else
     {
         Attendance = await AttendanceService.GetYearAttendanceAsync(Id, Year);
     }
+
+    private async Task GetEmployees()
+    {
+        EmployeeList = await EmployeeService.GetEmployeesAsync();
+    }
+
 
     private async Task MarkAttendance(int employeeId, int month, int day)
     {
@@ -139,7 +164,13 @@ else
     {
         NavigationManager.NavigateTo($"/employees/{Id}/attendance/{year}");
         Year = year;
-        await LoadCurrentMonth();
+        await LoadCurrentYear();
+    }
+
+    private async Task OnChangeEmployee(ChangeEventArgs e)
+    {
+        Id = int.Parse(SelectedEmployeeId);
+        await Go(Year);
     }
 
     private void OnShowModal(int employeeId, int day, int month, int? attendanceTypeId, int? leaveTypeId = null, string comments = null)
