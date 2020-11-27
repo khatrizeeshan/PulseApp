@@ -17,11 +17,6 @@ namespace PulseApp.Data
         public ICollection<Attendance> Attendances { get; set; }
     }
 
-    public class EmployeeConfiguration : BaseEntityTypeConfiguration, IEntityTypeConfiguration<Employee>
-    {
-        public void Configure(EntityTypeBuilder<Employee> builder)
-        {
-            base.Configure(builder);
-        }
-    }
+    public class EmployeeConfiguration : BaseEntityTypeConfiguration<Employee> { }
+
 }

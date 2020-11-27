@@ -1,5 +1,3 @@
-using Microsoft.EntityFrameworkCore;
-using Microsoft.EntityFrameworkCore.Metadata.Builders;
 using System;
 
 namespace PulseApp.Data
@@ -15,14 +13,16 @@ namespace PulseApp.Data
         public LeaveType LeaveType { get; set; }
         public int Hours { get; set; }
         public string Comments { get; set; }
-
     }
 
-    public class AttendanceConfiguration : BaseEntityTypeConfiguration, IEntityTypeConfiguration<Attendance>
+    public class AttendanceType : BaseModel<int>
     {
-        public void Configure(EntityTypeBuilder<Attendance> builder)
-        {
-            base.Configure(builder);
-        }
+        public string Code { get; set; }
+        public string Name { get; set; }
+        public bool IsDefault { get; set; }
     }
+
+    public class AttendanceConfiguration : BaseEntityTypeConfiguration<Attendance> { }
+    public class AttendanceTypeConfiguration : BaseEntityTypeConfiguration<AttendanceType> { }
+
 }

@@ -1,7 +1,5 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.Linq;
-using System.Threading.Tasks;
 
 namespace PulseApp.Helpers
 {
@@ -28,7 +26,7 @@ namespace PulseApp.Helpers
                     .ToArray();
         }
 
-        public static DateTime FirstDay(int year, int month)
+        public static DateTime FirstDay(int year, int month = 1)
         {
             return new DateTime(year, month, 1);
         }

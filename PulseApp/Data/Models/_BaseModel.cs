@@ -1,4 +1,5 @@
-﻿using Microsoft.EntityFrameworkCore.Metadata.Builders;
+﻿using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Metadata.Builders;
 
 namespace PulseApp.Data
 {
@@ -7,9 +8,15 @@ namespace PulseApp.Data
         public T Id { get; set; }
     }
 
-    public abstract class BaseEntityTypeConfiguration
+    public abstract class BaseEntityTypeConfiguration<T> : IEntityTypeConfiguration<T>
+        where T : BaseModel<int>
     {
-        protected void Configure<T>(EntityTypeBuilder<T> builder) where T : BaseModel<int>
+        protected BaseEntityTypeConfiguration()
+        {
+
+        }
+
+        public void Configure(EntityTypeBuilder<T> builder)
         {
             builder.HasKey(e => e.Id);
             builder.Property(e => e.Id).ValueGeneratedNever();

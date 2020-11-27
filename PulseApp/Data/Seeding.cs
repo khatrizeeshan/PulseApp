@@ -7,8 +7,10 @@ namespace PulseApp.Data
 {
     public class Seeding
     {
+        private static readonly Setting Setting = new Setting() { Id = 0, WeekDays = "0111110" };
+
         private static readonly AttendanceType[] AttendanceTypeList = new AttendanceType[]
-{
+        {
             new AttendanceType() { Id = AttendanceTypes.Full, Code = "F", Name = "Full", IsDefault = true },
             new AttendanceType() { Id = AttendanceTypes.Late, Code = "T", Name = "Late", IsDefault = true },
             new AttendanceType() { Id = AttendanceTypes.Half, Code = "H", Name = "Half", IsDefault = true },
@@ -33,6 +35,7 @@ namespace PulseApp.Data
 
         public static async Task Run(ApplicationDbContext context)
         {
+            await context.AddAsync(Setting);
             await context.AddRangeAsync(AttendanceTypeList);
             await context.AddRangeAsync(LeaveTypeList);
             await context.AddRangeAsync(context.SetId(EmployeeList));
