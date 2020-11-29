@@ -12,12 +12,15 @@ namespace PulseApp.Data
     {
         public int CalendarId { get; set; }
         public Calendar Calendar { get; set; }
-        public DateTime Day { get; set; }
-        public DayType Type { get; set; }
+        public DateTime Date { get; set; }
+        public int DayTypeId { get; set; }
+        public DayType DayType { get; set; }
+        public string Comments { get; set; }
     }
 
     public class DayType : BaseModel<int>
     {
+        public string Code { get; set; }
         public string Name { get; set; }
     }
 
