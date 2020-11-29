@@ -168,8 +168,6 @@ namespace PulseApp.Data
         public int Month { get; set; }
         public string MonthName { get; set; }
         public int Year { get; set; }
-        public int StartDay { get; set; }
-        public int[] OffDays { get; set; }
         public int Days { get; set; }
         public Dictionary<int, CalendarDayDetailDto> CalendarDays { get; set; }
     }
@@ -189,18 +187,25 @@ namespace PulseApp.Data
             calendar.EndDate = dto.EndDate;
         }
 
+        public static string ToRangeString(this CalendarDto dto)
+        {
+            return $"{dto.StartDate.ToShortDateString()} - {dto.EndDate.ToShortDateString()}";
+        }
+
         public static void Fill(this List<CalendayDayMonthDto> destination, CalendarDayDto[] days, DateTime start, DateTime end)
         {
-            for (int month = start.Month; month <= 12; month++)
+            var date = start;
+            while (date <= end)
             {
-                var firstDay = DateTimeHelper.FirstDay(start.Year, month);
+                var month = date.Month;
+                var year = date.Year;
+                var firstDay = DateTimeHelper.FirstDay(year, month);
                 var dto = new CalendayDayMonthDto()
                 {
                     Month = month,
                     MonthName = DateTimeHelper.GetMonthName(month),
-                    Days = DateTime.DaysInMonth(start.Year, month),
-                    OffDays = DateTimeHelper.WeekDays(start.Year, month),
-                    //StartDay = employee.Joining < firstDay ? 1 : employee.Joining.Day,
+                    Year = year,
+                    Days = DateTime.DaysInMonth(year, month),
                     CalendarDays = new Dictionary<int, CalendarDayDetailDto>(),
                 };
 
@@ -219,6 +224,7 @@ namespace PulseApp.Data
                 }
 
                 destination.Add(dto);
+                date = date.AddMonths(1);
             }
         }
     }

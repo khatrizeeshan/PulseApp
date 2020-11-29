@@ -9,6 +9,17 @@ namespace PulseApp.Data
     {
         private static readonly Setting Setting = new Setting() { Id = 0, WeekDays = "0111110" };
 
+        private static readonly DayType[] DayTypeList = new DayType[]
+        {
+            new DayType() { Id = DayTypes.Weekend, Code = "W", Name = "WeekEnd" },
+            new DayType() { Id = DayTypes.Holiday, Code = "H", Name = "Holiday" },
+        };
+
+        private static readonly Calendar[] CalendarList = new Calendar[]
+        {
+            new Calendar() { StartDate = new DateTime(2020, 7, 1), EndDate = new DateTime(2021, 6, 30)},
+        };
+
         private static readonly AttendanceType[] AttendanceTypeList = new AttendanceType[]
         {
             new AttendanceType() { Id = AttendanceTypes.Full, Code = "F", Name = "Full", IsDefault = true },
@@ -36,8 +47,10 @@ namespace PulseApp.Data
         public static async Task Run(ApplicationDbContext context)
         {
             await context.AddAsync(Setting);
+            await context.AddRangeAsync(DayTypeList);
             await context.AddRangeAsync(AttendanceTypeList);
             await context.AddRangeAsync(LeaveTypeList);
+            await context.AddRangeAsync(context.SetId(CalendarList));
             await context.AddRangeAsync(context.SetId(EmployeeList));
             await context.SaveChangesAsync();
         }

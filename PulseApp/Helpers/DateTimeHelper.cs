@@ -30,5 +30,6 @@ namespace PulseApp.Helpers
         {
             return new DateTime(year, month, 1);
         }
+
     }
 }
