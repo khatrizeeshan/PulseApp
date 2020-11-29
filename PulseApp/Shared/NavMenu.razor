@@ -1,4 +1,8 @@
-﻿<div class="top-row pl-4 navbar navbar-dark">
+﻿@using PulseApp.Data
+
+@inject CalendarService CalendarService
+
+<div class="top-row pl-4 navbar navbar-dark">
     <a class="navbar-brand" href="">PulseApp</a>
     <button class="navbar-toggler" @onclick="ToggleNavMenu">
         <span class="navbar-toggler-icon"></span>
@@ -23,8 +27,8 @@
             </NavLink>
         </li>
         <li class="nav-item px-3">
-            @*TODO: Need to Fix Id*@ 
-            <NavLink class="nav-link" href="calendars/1000">
+            @*TODO: Need to Fix Id*@
+            <NavLink class="nav-link" href="@calendar">
                 <span class="oi oi-list-rich" aria-hidden="true"></span> Calendar
             </NavLink>
         </li>
@@ -36,10 +40,20 @@
 
     private string NavMenuCssClass => collapseNavMenu ? "collapse" : null;
 
+    private int LastCalendarId = 0;
+
+    protected override async Task OnInitializedAsync()
+    {
+        LastCalendarId = await CalendarService.GetLastIdAsync();
+        calendar = $"calendars/{LastCalendarId}";
+    }
+
     private void ToggleNavMenu()
     {
         collapseNavMenu = !collapseNavMenu;
     }
 
     private string attendance = $"attendance/{DateTime.Today.Year}/{DateTime.Today.Month}";
+    private string calendar = $"calendars/0";
+
 }

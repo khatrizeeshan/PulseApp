@@ -50,7 +50,7 @@ else
                 @foreach (var month in CalendarDays)
                 {
                     <tr>
-                        <td>@month.MonthName</td>
+                        <td>@month.MonthName, @month.Year</td>
                         @for (int i = 1; i <= month.Days; i++)
                         {
                             var day = i;
@@ -162,7 +162,10 @@ else
     private async Task Go(int id)
     {
         NavigationManager.NavigateTo($"/calendars/{id}");
-        SelectedCalendarId = id.ToString();
+        Id = id;
+        SelectedCalendarId = Id.ToString();
+        SelectedCalendar = CalendarList.Single(c => c.Id == Id);
+        SelectedCalendarIndex = Array.IndexOf(CalendarList, SelectedCalendar);
         await LoadCurrent();
     }
 

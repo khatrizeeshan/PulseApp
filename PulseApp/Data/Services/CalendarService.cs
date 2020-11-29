@@ -62,6 +62,13 @@ namespace PulseApp.Data
             return calendar.Id;
         }
 
+        public async Task<int> GetLastIdAsync()
+        {
+            using var context = DbFactory.CreateDbContext();
+            return await context.Calendars.OrderByDescending(c => c.StartDate)
+                .Select(c => c.Id).FirstOrDefaultAsync();
+        }
+
         public async Task<DayType[]> GetDayTypesAsync()
         {
             using var context = DbFactory.CreateDbContext();

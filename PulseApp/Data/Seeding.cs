@@ -1,24 +1,51 @@
 ﻿using PulseApp.Constants;
 using PulseApp.Helpers;
 using System;
+using System.Collections.Generic;
 using System.Threading.Tasks;
 
 namespace PulseApp.Data
 {
     public class Seeding
     {
-        private static readonly Setting Setting = new Setting() { Id = 0, WeekDays = "0111110" };
+        private static readonly Setting Setting = new Setting() { Id = 0, Weekends = "1000001" };
 
         private static readonly DayType[] DayTypeList = new DayType[]
         {
-            new DayType() { Id = DayTypes.Weekend, Code = "W", Name = "WeekEnd" },
+            new DayType() { Id = DayTypes.Weekend, Code = "W", Name = "Weekend" },
             new DayType() { Id = DayTypes.Holiday, Code = "H", Name = "Holiday" },
         };
 
         private static readonly Calendar[] CalendarList = new Calendar[]
         {
+            new Calendar() { StartDate = new DateTime(2019, 7, 1), EndDate = new DateTime(2020, 6, 30)},
             new Calendar() { StartDate = new DateTime(2020, 7, 1), EndDate = new DateTime(2021, 6, 30)},
         };
+
+        private static CalendarDay[] GetCalendarDays(Setting setting, Calendar[] calendars)
+        {
+            var days = new List<CalendarDay>();
+
+            foreach (var calendar in calendars)
+            {
+                var date = calendar.StartDate;
+
+                var weekends = setting.Weekends.ToCharArray();
+                var on = '1';
+
+                while (date <= calendar.EndDate)
+                {
+                    if (weekends[(int)date.DayOfWeek] == on)
+                    {
+                        days.Add(new CalendarDay() { CalendarId = calendar.Id, Date = date, DayTypeId = DayTypes.Weekend });
+                    }
+
+                    date = date.AddDays(1);
+                }
+            }
+
+            return days.ToArray();
+        }
 
         private static readonly AttendanceType[] AttendanceTypeList = new AttendanceType[]
         {
@@ -51,6 +78,7 @@ namespace PulseApp.Data
             await context.AddRangeAsync(AttendanceTypeList);
             await context.AddRangeAsync(LeaveTypeList);
             await context.AddRangeAsync(context.SetId(CalendarList));
+            await context.AddRangeAsync(context.SetId(GetCalendarDays(Setting, CalendarList)));
             await context.AddRangeAsync(context.SetId(EmployeeList));
             await context.SaveChangesAsync();
         }

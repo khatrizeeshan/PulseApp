@@ -2,6 +2,6 @@
 {
     public class Setting : BaseModel<int>
     {
-        public string WeekDays { get; set; }
+        public string Weekends { get; set; }
     }
 }
