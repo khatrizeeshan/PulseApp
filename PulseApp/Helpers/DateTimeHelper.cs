@@ -31,5 +31,27 @@ namespace PulseApp.Helpers
             return new DateTime(year, month, 1);
         }
 
+        public static Tuple<DateTime, DateTime> MonthRange(int year, int month)
+        {
+            var start = new DateTime(year, month, 1);
+            var end = new DateTime(year, month, DateTime.DaysInMonth(year, month));
+
+            return new Tuple<DateTime, DateTime>(start, end);
+        }
+
+        public static Tuple<DateTime, DateTime> YearRange(int year)
+        {
+            var end = new DateTime(year, 12, 31);
+            var start = new DateTime(year, 1, 1);
+
+            return new Tuple<DateTime, DateTime>(start, end);
+        }
+
+        public static int[] OffDaysOfMonth(DateTime[] offDays, int year, int month)
+        {
+            return offDays.Where(d => d.Year == year && d.Month == month).Select(d => d.Day).ToArray();
+        }
+
     }
 }
+

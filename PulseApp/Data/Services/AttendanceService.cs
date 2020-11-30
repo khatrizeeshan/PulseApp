@@ -1,4 +1,5 @@
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.DependencyInjection;
 using PulseApp.Constants;
 using PulseApp.Helpers;
 using System;
@@ -12,12 +13,14 @@ namespace PulseApp.Data
     public class AttendanceService
     {
 
-        public AttendanceService(IDbContextFactory<ApplicationDbContext> dbFactory)
+        public AttendanceService(IServiceProvider provider, IDbContextFactory<ApplicationDbContext> dbFactory)
         {
             this.DbFactory = dbFactory;
+            this.Provider = provider;
         }
 
         public IDbContextFactory<ApplicationDbContext> DbFactory { get; set; }
+        public IServiceProvider Provider { get; set; }
 
         public async Task<AttendanceType[]> GetAttendanceTypesAsync()
         {
@@ -37,8 +40,7 @@ namespace PulseApp.Data
 
         public async Task<MonthAttendanceDto[]> GetMonthAttendanceAsync(int year, int month)
         {
-            var start = new DateTime(year, month, 1);
-            var end = new DateTime(year, month, DateTime.DaysInMonth(year, month));
+            var (start, end) = DateTimeHelper.MonthRange(year, month);
             using var context = DbFactory.CreateDbContext();
 
             var employees = await context.Employees
@@ -47,9 +49,9 @@ namespace PulseApp.Data
                 .ToArrayAsync();
 
             var attendances = await context.Attendances
-                    .Where(a => a.Date >= start && a.Date <= end)
-                    .Select(AttendanceDto.Selector)
-                    .ToArrayAsync();
+                .Where(a => a.Date >= start && a.Date <= end)
+                .Select(AttendanceDto.Selector)
+                .ToArrayAsync();
 
             var result = new List<MonthAttendanceDto>();
             result.Fill(employees, attendances, start);
@@ -58,7 +60,8 @@ namespace PulseApp.Data
 
         public async Task<EmployeeAttendanceDto[]> GetYearAttendanceAsync(int employeeId, int year)
         {
-            var end = new DateTime(year, 12, 31);
+            var (start, end) = DateTimeHelper.YearRange(year);
+
             using var context = DbFactory.CreateDbContext();
 
             var employee = await context.Employees
@@ -71,7 +74,6 @@ namespace PulseApp.Data
                 return Array.Empty<EmployeeAttendanceDto>();
             }
 
-            var start = new DateTime(year, 1, 1);
             if (employee.Joining > start)
             {
                 start = employee.Joining;
@@ -82,9 +84,17 @@ namespace PulseApp.Data
                     .Select(AttendanceDto.Selector)
                     .ToArrayAsync();
 
+            var offDates = await GetOffDates(start, end);
+
             var result = new List<EmployeeAttendanceDto>();
-            result.Fill(employee, attendances, start);
+            result.Fill(employee, attendances, start, offDates);
             return result.ToArray();
+        }
+
+        private async Task<DateTime[]> GetOffDates(DateTime start, DateTime end)
+        {
+            var service = Provider.GetRequiredService<CalendarService>();
+            return await service.GetOffDates(start, end);
         }
 
         public async Task MarkAttendanceAsync(int employeeId, int year, int month, int day, 
@@ -214,7 +224,7 @@ namespace PulseApp.Data
             }
         }
 
-        public static void Fill(this List<EmployeeAttendanceDto> destination, EmployeeDto employee, AttendanceDto[] attendances, DateTime start)
+        public static void Fill(this List<EmployeeAttendanceDto> destination, EmployeeDto employee, AttendanceDto[] attendances, DateTime start, DateTime[] offDates)
         {
             for(int month = start.Month; month <= 12; month++)
             {
@@ -224,7 +234,7 @@ namespace PulseApp.Data
                     Month = month,
                     MonthName = DateTimeHelper.GetMonthName(month),
                     Days = DateTime.DaysInMonth(start.Year, month),
-                    OffDays = DateTimeHelper.WeekDays(start.Year, month),
+                    OffDays = DateTimeHelper.OffDaysOfMonth(offDates, start.Year, month),
                     StartDay = employee.Joining < firstDay ? 1 : employee.Joining.Day,
                     Attendance = new Dictionary<int, DayAttendanceDetailDto>(),
                 };

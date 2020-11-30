@@ -8,7 +8,7 @@ namespace PulseApp.Data
 {
     public class Seeding
     {
-        private static readonly Setting Setting = new Setting() { Id = 0, Weekends = "1000001" };
+        private static readonly Setting Setting = new Setting() { Id = 0, Weekends = "1000000" };
 
         private static readonly DayType[] DayTypeList = new DayType[]
         {

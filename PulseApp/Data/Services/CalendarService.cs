@@ -126,6 +126,30 @@ namespace PulseApp.Data
 
             await context.SaveChangesAsync();
         }
+
+        public async Task<int[]> GetOffDays(int year, int month)
+        {
+            var (start, end) = DateTimeHelper.MonthRange(year, month);
+
+            using var context = DbFactory.CreateDbContext();
+            var offDays = await context.CalendarDays
+                .Where(a => a.Date >= start && a.Date <= end)
+                .Select(d => d.Date.Day)
+                .ToArrayAsync();
+
+            return offDays;
+        }
+
+        public async Task<DateTime[]> GetOffDates(DateTime start, DateTime end)
+        {
+            using var context = DbFactory.CreateDbContext();
+            var offDates = await context.CalendarDays
+                .Where(a => a.Date >= start && a.Date <= end)
+                .Select(d => d.Date)
+                .ToArrayAsync();
+
+            return offDates;
+        }
     }
 
     public class CalendarDto

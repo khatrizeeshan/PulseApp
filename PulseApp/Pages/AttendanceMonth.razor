@@ -6,6 +6,7 @@
 
 @inject NavigationManager NavigationManager
 @inject AttendanceService AttendanceService
+@inject CalendarService CalendarService
 
 <h1>Attendance</h1>
 
@@ -114,7 +115,6 @@ else
     protected override async Task OnInitializedAsync()
     {
         await LoadCurrentMonth();
-        await GetOffDays();
     }
 
     private async Task LoadCurrentMonth()
@@ -122,6 +122,7 @@ else
         MonthName = DateTimeHelper.GetMonthName(Month);
         FirstDay = DateTimeHelper.FirstDay(Year, Month);
         Days = DateTime.DaysInMonth(Year, Month);
+        OffDays = await CalendarService.GetOffDays(Year, Month);
 
         Today = 0;
         if (DateTimeHelper.IsCurrentMonth(Year, Month))
@@ -135,11 +136,6 @@ else
     private async Task Get()
     {
         Attendance = await AttendanceService.GetMonthAttendanceAsync(Year, Month);
-    }
-
-    private async Task GetOffDays()
-    {
-        OffDays = DateTimeHelper.WeekDays(Year, Month);
     }
 
     private async Task MarkAttendance(int employeeId, int day)
