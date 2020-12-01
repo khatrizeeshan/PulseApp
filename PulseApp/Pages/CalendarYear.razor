@@ -2,6 +2,7 @@
 
 @using PulseApp.Data
 @using PulseApp.Constants
+@using PulseApp.Helpers
 
 @inject NavigationManager NavigationManager
 @inject CalendarService CalendarService
@@ -26,6 +27,8 @@ else
                     <option value="@calendar.Id">@calendar.ToRangeString()</option>
                 }
             </select>
+            <button @onclick="OnShowAddModal" type="button" class="btn btn-link">Add</button>
+
         </div>
     </div>
     <div class="d-flex justify-content-end">
@@ -58,7 +61,7 @@ else
                             <td class="text-center p-0">
                                 <div style="height: 100%;">
                                     <div style="cursor: pointer;" class="mt-auto @GetClass(detail, "main")"
-                                         @onclick="() => OnShowModal(Id, day, month.Month, month.Year, detail?.DayTypeId, detail?.Comments)">
+                                         @onclick="() => OnShowDayModal(Id, day, month.Month, month.Year, detail?.DayTypeId, detail?.Comments)">
                                         <small>c</small>
                                     </div>
                                 </div>
@@ -80,9 +83,14 @@ else
         <div>No record found for selected year.</div>
     }
 
-    @if (ShowModal && Current != null)
+    @if (ShowCalendarDayModal && CurrentDay != null)
     {
-        <CalendarDay Current="Current" OnCancelCallback="OnCancelModal" OnConfirmCallback="OnConfirmModal"></CalendarDay>
+        <CalendarDay Current="CurrentDay" OnCancelCallback="OnCancelDayModal" OnConfirmCallback="OnConfirmDayModal"></CalendarDay>
+    }
+
+    @if (ShowAddModal)
+    {
+        <Calendar Current="CurrentCalendar" OnCancelCallback="OnCancelAddModal" OnConfirmCallback="OnConfirmAddModal"></Calendar>
     }
 }
 
@@ -104,9 +112,13 @@ else
 
     private int SelectedCalendarIndex { get; set; }
 
-    private bool ShowModal { get; set; }
+    private bool ShowCalendarDayModal { get; set; }
 
-    private CalendarDayDto Current { get; set; }
+    private bool ShowAddModal { get; set; }
+
+    private CalendarDayDto CurrentDay { get; set; }
+
+    private CalendarDto CurrentCalendar { get; set; }
 
     protected override async Task OnInitializedAsync()
     {
@@ -138,6 +150,13 @@ else
     {
         await CalendarService.MarkDayAsync(day.CalendarId, day.Year, day.Month, day.Day, day.DayTypeId, day.Comments);
         await Get();
+    }
+
+    private async Task AddCalendar(CalendarDto calendar)
+    {
+        var id = await CalendarService.AddAsync(calendar);
+        await GetCalendars();
+        await Go(id);
     }
 
     private async Task OnNext()
@@ -175,9 +194,41 @@ else
         await Go(id);
     }
 
-    private void OnShowModal(int calendarId, int day, int month, int year, int? dayTypeId, string comments = null)
+
+    private void OnShowAddModal()
     {
-        Current = new CalendarDayDto
+        var start = DateTimeHelper.FirstDay();
+        if (CalendarList.Any())
+        {
+            start = CalendarList.Max(c => c.EndDate).AddDays(1);
+        }
+
+        var end = start.AddYears(1).AddDays(-1);
+
+        CurrentCalendar = new CalendarDto
+        {
+            StartDate = start,
+            EndDate = end
+        };
+
+        ShowAddModal = true;
+    }
+
+    private void OnCancelAddModal()
+    {
+        CurrentCalendar = null;
+        ShowAddModal = false;
+    }
+
+    private async Task OnConfirmAddModal()
+    {
+        await AddCalendar(CurrentCalendar);
+        ShowAddModal = false;
+    }
+
+    private void OnShowDayModal(int calendarId, int day, int month, int year, int? dayTypeId, string comments = null)
+    {
+        CurrentDay = new CalendarDayDto
         {
             CalendarId = calendarId,
             Day = day,
@@ -187,19 +238,19 @@ else
             Comments = comments,
         };
 
-        ShowModal = true;
+        ShowCalendarDayModal = true;
     }
 
-    private void OnCancelModal()
+    private void OnCancelDayModal()
     {
-        Current = null;
-        ShowModal = false;
+        CurrentDay = null;
+        ShowCalendarDayModal = false;
     }
 
-    private async Task OnConfirmModal()
+    private async Task OnConfirmDayModal()
     {
-        await MarkDay(Current);
-        ShowModal = false;
+        await MarkDay(CurrentDay);
+        ShowCalendarDayModal = false;
     }
 
     private string GetClass(CalendarDayDetailDto detail, string position)

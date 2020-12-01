@@ -31,6 +31,16 @@ namespace PulseApp.Helpers
             return new DateTime(year, month, 1);
         }
 
+        public static DateTime FirstDay()
+        {
+            return new DateTime(DateTime.Today.Year, DateTime.Today.Month, 1);
+        }
+
+        public static DateTime LastDay(int year, int month = 12)
+        {
+            return new DateTime(year, month, DateTime.DaysInMonth(year, month));
+        }
+
         public static Tuple<DateTime, DateTime> MonthRange(int year, int month)
         {
             var start = new DateTime(year, month, 1);

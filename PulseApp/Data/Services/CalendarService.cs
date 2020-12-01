@@ -1,4 +1,5 @@
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.DependencyInjection;
 using PulseApp.Helpers;
 using System;
 using System.Collections.Generic;
@@ -11,12 +12,15 @@ namespace PulseApp.Data
     public class CalendarService
     {
 
-        public CalendarService(IDbContextFactory<ApplicationDbContext> dbFactory)
+        public CalendarService(IServiceProvider provider, IDbContextFactory<ApplicationDbContext> dbFactory)
         {
+            this.Provider = provider;
             this.DbFactory = dbFactory;
         }
 
         public IDbContextFactory<ApplicationDbContext> DbFactory { get; set; }
+
+        public IServiceProvider Provider { get; set; }
 
         public async Task<CalendarDto[]> GetCalendarsAsync()
         {
@@ -53,10 +57,17 @@ namespace PulseApp.Data
         public async Task<int> AddAsync(CalendarDto dto)
         {
             using var context = DbFactory.CreateDbContext();
+            var settings = Provider.GetRequiredService<SettingService>();
+
             var calendar = new Calendar();
             calendar.Fill(dto);
-            calendar.Id = context.GetSequence<Calendar>();
+            context.SetId(calendar);
+
+            var calendarDays = calendar.MakeWeekends(settings.Weekends);
+            context.SetId(calendarDays);
+
             await context.Calendars.AddAsync(calendar);
+            await context.CalendarDays.AddRangeAsync(calendarDays);
             await context.SaveChangesAsync();
 
             return calendar.Id;

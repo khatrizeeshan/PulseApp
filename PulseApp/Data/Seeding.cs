@@ -18,8 +18,8 @@ namespace PulseApp.Data
 
         private static readonly Calendar[] CalendarList = new Calendar[]
         {
-            new Calendar() { StartDate = new DateTime(2019, 7, 1), EndDate = new DateTime(2020, 6, 30)},
-            new Calendar() { StartDate = new DateTime(2020, 7, 1), EndDate = new DateTime(2021, 6, 30)},
+            new Calendar() { StartDate = new DateTime(2019, 7, 1), EndDate = new DateTime(2020, 6, 30) },
+            new Calendar() { StartDate = new DateTime(2020, 7, 1), EndDate = new DateTime(2021, 6, 30) },
         };
 
         private static CalendarDay[] GetCalendarDays(Setting setting, Calendar[] calendars)
@@ -28,20 +28,7 @@ namespace PulseApp.Data
 
             foreach (var calendar in calendars)
             {
-                var date = calendar.StartDate;
-
-                var weekends = setting.Weekends.ToCharArray();
-                var on = '1';
-
-                while (date <= calendar.EndDate)
-                {
-                    if (weekends[(int)date.DayOfWeek] == on)
-                    {
-                        days.Add(new CalendarDay() { CalendarId = calendar.Id, Date = date, DayTypeId = DayTypes.Weekend });
-                    }
-
-                    date = date.AddDays(1);
-                }
+                days.AddRange(calendar.MakeWeekends(setting.Weekends));
             }
 
             return days.ToArray();

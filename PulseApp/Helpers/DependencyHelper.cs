@@ -7,6 +7,7 @@ namespace PulseApp.Helpers
     {
         public static void AddServices(this IServiceCollection services)
         {
+            services.AddSingleton<SettingService>();
             services.AddSingleton<EmployeeService>();
             services.AddSingleton<AttendanceService>();
             services.AddSingleton<CalendarService>();

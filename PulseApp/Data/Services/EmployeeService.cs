@@ -55,7 +55,7 @@ namespace PulseApp.Data
             using var context = DbFactory.CreateDbContext();
             var employee = new Employee();
             employee.Fill(dto);
-            employee.Id = context.GetSequence<Employee>();
+            context.SetId(employee);
             await context.Employees.AddAsync(employee);
             await context.SaveChangesAsync();
 

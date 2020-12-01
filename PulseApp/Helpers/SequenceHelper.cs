@@ -8,7 +8,7 @@ namespace PulseApp.Helpers
 {
     public static class SequenceHelper
     {
-        public static int GetSequence<T>(this ApplicationDbContext context)
+        private static int GetSequence<T>(this ApplicationDbContext context)
         {
             var sequence = $"{typeof(T).Name}Id";
             SqlParameter result = new SqlParameter("@result", System.Data.SqlDbType.Int)
