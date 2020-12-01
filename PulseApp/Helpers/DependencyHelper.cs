@@ -11,6 +11,7 @@ namespace PulseApp.Helpers
             services.AddSingleton<EmployeeService>();
             services.AddSingleton<AttendanceService>();
             services.AddSingleton<CalendarService>();
+            services.AddSingleton<LeaveService>();
         }
     }
 }

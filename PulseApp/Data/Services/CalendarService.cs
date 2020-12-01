@@ -161,6 +161,22 @@ namespace PulseApp.Data
 
             return offDates;
         }
+
+        public async Task<int> GetCalendarIdAsync(DateTime date)
+        {
+            using var context = DbFactory.CreateDbContext();
+            var calendarId = await context.Calendars
+                    .Where(a => date >= a.StartDate && date <= a.EndDate)
+                    .Select(c => c.Id)
+                    .SingleOrDefaultAsync();
+
+            if (calendarId == 0)
+            {
+                throw new Exception("No calendar found for selected date.");
+            }
+
+            return calendarId;
+        }
     }
 
     public class CalendarDto

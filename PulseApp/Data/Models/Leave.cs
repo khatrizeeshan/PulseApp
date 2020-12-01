@@ -29,9 +29,13 @@ namespace PulseApp.Data
         public Employee Employee { get; set; }
         public int CalendarId { get; set; }
         public Calendar Calendar { get; set; }
+        public int? AttendanceId { get; set; }
+        public Attendance Attendance { get; set; }
         public DateTime Date { get; set; }
         public int LeaveTypeId { get; set; }
         public LeaveType LeaveType { get; set; }
+        public bool Opening { get; set; }
+        public bool Forwarded { get; set; }
         public int Count { get; set; }
     }
 

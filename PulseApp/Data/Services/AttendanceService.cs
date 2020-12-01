@@ -102,6 +102,9 @@ namespace PulseApp.Data
         {
             var date = new DateTime(year, month, day);
             using var context = DbFactory.CreateDbContext();
+            var service = Provider.GetRequiredService<EmployeeService>();
+
+            var calendarId = await service.GetCalendarIdAsync(employeeId, date);
 
             var attendance = await context.Attendances.SingleOrDefaultAsync(e => e.EmployeeId == employeeId && e.Date == date);
             if(attendance == null)
@@ -120,9 +123,31 @@ namespace PulseApp.Data
             }
             else
             {
+                if (attendance.AttendanceTypeId == AttendanceTypes.Leave)
+                {
+                    var leave = await context.Leaves.SingleOrDefaultAsync(e => e.AttendanceId == attendance.Id);
+                    if (leave == null) {
+                        context.Leaves.Remove(leave);
+                    }
+                }
                 attendance.AttendanceTypeId = attendanceTypeId;
                 attendance.SetLeaveTypeId(leaveTypeId);
                 context.Attendances.Update(attendance);
+            }
+
+            if (attendance.AttendanceTypeId == AttendanceTypes.Leave)
+            {
+                var leave = new Leave()
+                {
+                    AttendanceId = attendance.Id,
+                    CalendarId = calendarId,
+                    LeaveTypeId = attendance.LeaveTypeId.Value,
+                    Date = attendance.Date,
+                    EmployeeId = attendance.EmployeeId,
+                    Count = -1,
+                };
+                context.SetId(leave);
+                await context.Leaves.AddAsync(leave);
             }
 
             await context.SaveChangesAsync();

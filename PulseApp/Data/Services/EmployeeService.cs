@@ -1,4 +1,5 @@
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.DependencyInjection;
 using PulseApp.Helpers;
 using System;
 using System.Collections.Generic;
@@ -11,12 +12,14 @@ namespace PulseApp.Data
     public class EmployeeService
     {
 
-        public EmployeeService(IDbContextFactory<ApplicationDbContext> dbFactory)
+        public EmployeeService(IServiceProvider provider, IDbContextFactory<ApplicationDbContext> dbFactory)
         {
             this.DbFactory = dbFactory;
+            this.Provider = provider;
         }
 
         public IDbContextFactory<ApplicationDbContext> DbFactory { get; set; }
+        public IServiceProvider Provider { get; set; }
 
         public async Task<EmployeeDto[]> GetEmployeesAsync()
         {
@@ -61,6 +64,22 @@ namespace PulseApp.Data
 
             return employee.Id;
         }
+
+        public async Task<int> GetCalendarIdAsync(int employeeId, DateTime date)
+        {
+            using var context = DbFactory.CreateDbContext();
+            var employee = await context.Employees.Where(e => e.Id == employeeId)
+                                        .Select(EmployeeJoiningDto.Selector)
+                                        .SingleOrDefaultAsync();
+
+            if (date < employee.Joining) {
+                throw new Exception("No calendar found for selected employee.");
+            }
+
+            var service = Provider.GetRequiredService<CalendarService>();
+            return await service.GetCalendarIdAsync(date);
+        }
+
     }
 
     public class EmployeeDto
@@ -77,6 +96,18 @@ namespace PulseApp.Data
             FirstName = e.FirstName,
             LastName = e.LastName,
             Email = e.Email,
+            Joining = e.Joining,
+        };
+    }
+
+    public class EmployeeJoiningDto
+    {
+        public int Id { get; set; }
+        public DateTime Joining { get; set; }
+
+        public static Expression<Func<Employee, EmployeeJoiningDto>> Selector = e => new EmployeeJoiningDto
+        {
+            Id = e.Id,
             Joining = e.Joining,
         };
     }
