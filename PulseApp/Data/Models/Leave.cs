@@ -1,9 +1,28 @@
-using Microsoft.EntityFrameworkCore;
-using Microsoft.EntityFrameworkCore.Metadata.Builders;
 using System;
+using System.Collections.Generic;
 
 namespace PulseApp.Data
 {
+    public class LeavePolicy : BaseModel<int>
+    {
+        public string Name { get; set; }
+
+        public ICollection<LeavePolicyDetail> Details { get; set; }
+    }
+
+    public class LeavePolicyDetail : BaseModel<int>
+    {
+        public int LeavePolicyId { get; set; }
+
+        public LeavePolicy LeavePolicy { get; set; }
+
+        public int LeaveTypeId { get; set; }
+
+        public LeaveType LeaveType { get; set; }
+
+        public int Count { get; set; }
+    }
+
     public class Leave : BaseModel<int>
     {
         public int EmployeeId { get; set; }
@@ -11,7 +30,8 @@ namespace PulseApp.Data
         public int CalendarId { get; set; }
         public Calendar Calendar { get; set; }
         public DateTime Date { get; set; }
-        public LeaveType Type { get; set; }
+        public int LeaveTypeId { get; set; }
+        public LeaveType LeaveType { get; set; }
         public int Count { get; set; }
     }
 
@@ -22,6 +42,8 @@ namespace PulseApp.Data
         public bool IsDefault { get; set; }
     }
 
+    public class LeavePolicyConfiguration : BaseEntityTypeConfiguration<LeavePolicy> { }
+    public class LeavePolicyDetailConfiguration : BaseEntityTypeConfiguration<LeavePolicyDetail> { }
     public class LeaveConfiguration : BaseEntityTypeConfiguration<Leave> { }
     public class LeaveTypeConfiguration : BaseEntityTypeConfiguration<LeaveType> { }
 }

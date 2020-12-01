@@ -2,6 +2,7 @@
 using PulseApp.Helpers;
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Threading.Tasks;
 
 namespace PulseApp.Data
@@ -20,6 +21,21 @@ namespace PulseApp.Data
         {
             new Calendar() { StartDate = new DateTime(2019, 7, 1), EndDate = new DateTime(2020, 6, 30) },
             new Calendar() { StartDate = new DateTime(2020, 7, 1), EndDate = new DateTime(2021, 6, 30) },
+        };
+
+        private static readonly LeavePolicy[] LeavePolicyList = new LeavePolicy[]
+        {
+            new LeavePolicy() { Name = "Probation", Details = new List<LeavePolicyDetail>() },
+            new LeavePolicy() { Name = "Permanent", Details = new List<LeavePolicyDetail> {  
+                new LeavePolicyDetail() { LeaveTypeId = LeaveTypes.Casual, Count = 8 },
+                new LeavePolicyDetail() { LeaveTypeId = LeaveTypes.Sick, Count = 8 },
+                new LeavePolicyDetail() { LeaveTypeId = LeaveTypes.Earned, Count = 8 },
+            }},
+            new LeavePolicy() { Name = "After 2 Years" , Details = new List<LeavePolicyDetail> {
+                new LeavePolicyDetail() { LeaveTypeId = LeaveTypes.Casual, Count = 8 },
+                new LeavePolicyDetail() { LeaveTypeId = LeaveTypes.Sick, Count = 8 },
+                new LeavePolicyDetail() { LeaveTypeId = LeaveTypes.Earned, Count = 14 },
+            }},
         };
 
         private static CalendarDay[] GetCalendarDays(Setting setting, Calendar[] calendars)
@@ -46,8 +62,8 @@ namespace PulseApp.Data
         {
             new LeaveType() { Id = LeaveTypes.Casual, Code = "C", Name = "Casual", IsDefault = true },
             new LeaveType() { Id = LeaveTypes.Sick, Code = "S", Name = "Sick", IsDefault = true },
-            new LeaveType() { Id = LeaveTypes.Earned, Code = "E", Name = "Annual", IsDefault = true },
-            new LeaveType() { Id = LeaveTypes.Paid, Code = "D", Name = "Paid", IsDefault = true },
+            new LeaveType() { Id = LeaveTypes.Earned, Code = "E", Name = "Earned", IsDefault = true },
+            new LeaveType() { Id = LeaveTypes.Paid, Code = "P", Name = "Paid", IsDefault = true },
         };
 
         private static readonly Employee[] EmployeeList = new Employee[]
@@ -64,6 +80,12 @@ namespace PulseApp.Data
             await context.AddRangeAsync(DayTypeList);
             await context.AddRangeAsync(AttendanceTypeList);
             await context.AddRangeAsync(LeaveTypeList);
+            foreach(var policy in LeavePolicyList)
+            {
+                context.SetId(policy);
+                context.SetId(policy.Details);
+            }
+            await context.AddRangeAsync(context.SetId(LeavePolicyList));
             await context.AddRangeAsync(context.SetId(CalendarList));
             await context.AddRangeAsync(context.SetId(GetCalendarDays(Setting, CalendarList)));
             await context.AddRangeAsync(context.SetId(EmployeeList));
