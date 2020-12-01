@@ -14,7 +14,7 @@
 }
 else
 {
-    <input @oninput="OnFilter"></input>
+    <input @oninput="OnFilter" />
     <button @onclick="OnAdd">Add</button>
     <table class="table">
         <thead>
@@ -79,17 +79,17 @@ else
         await GetAll();
     }
 
-    private async Task OnEdit(int id)
+    private void OnEdit(int id)
     {
         GoAtEmployee(id);
     }
 
-    private async Task OnAdd()
+    private void OnAdd()
     {
         GoAtEmployee(0);
     }
 
-    private async Task OnAttendance(int id)
+    private void OnAttendance(int id)
     {
         GoAtAttendance(id);
     }
