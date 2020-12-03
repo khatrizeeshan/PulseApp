@@ -1,5 +1,6 @@
 using Microsoft.EntityFrameworkCore;
 using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Linq.Expressions;
 using System.Threading.Tasks;
@@ -19,15 +20,46 @@ namespace PulseApp.Data
 
         public IServiceProvider Provider { get; set; }
 
-        public async Task<LeaveDto[]> GetLeaveLedger(int employeeId, int calendarId)
+        public async Task<LeaveLedgerDto> GetLeaveLedger(int employeeId, int calendarId)
         {
             using var context = DbFactory.CreateDbContext();
 
-            return await context.Leaves
+            var types = await context.LeaveTypes
+                .Select(LeaveTypeDto.Selector)
+                .ToArrayAsync();
+
+            var leaves = await context.Leaves
                 .Where(l => l.EmployeeId == employeeId &&
                             l.CalendarId == calendarId)
                 .Select(LeaveDto.Selector)
                 .ToArrayAsync();
+
+            var ledger = new LeaveLedgerDto
+            {
+                LeaveTypes = types,
+                Farward = new Dictionary<int, int>(),
+                Opening = new Dictionary<int, int>(),
+                Leaves = new Dictionary<DateTime, Dictionary<int, int>>()
+            };
+
+            foreach (var leave in leaves.Where(l => l.Forwarded)) {
+               ledger.Farward.Add(leave.LeaveTypeId, leave.Count);
+            }
+
+            foreach (var leave in leaves.Where(l => l.Opening)) {
+                ledger.Opening.Add(leave.LeaveTypeId, leave.Count);
+            }
+
+            foreach (var leave in leaves.Where(l => !l.Opening && !l.Forwarded).OrderBy(l => l.Date))
+            {
+                var dictionary = new Dictionary<int, int>
+                {
+                    { leave.LeaveTypeId, leave.Count }
+                };
+                ledger.Leaves.Add(leave.Date, dictionary);
+            }
+
+            return ledger;
         }
     }
 
@@ -36,8 +68,8 @@ namespace PulseApp.Data
         public DateTime Date { get; set; }
         public int LeaveTypeId { get; set; }
         public string LeaveType { get; set; }
-        public bool Opening { get; set; }
         public bool Forwarded { get; set; }
+        public bool Opening { get; set; }
         public int Count { get; set; }
 
         public static Expression<Func<Leave, LeaveDto>> Selector = e => new LeaveDto
@@ -50,4 +82,31 @@ namespace PulseApp.Data
             Count = e.Count,
         };
     }
+
+    public class LeaveLedgerDto
+    {
+        public LeaveTypeDto[] LeaveTypes { get; set; }
+
+        public Dictionary<int, int> Farward { get; set; }
+
+        public Dictionary<int, int> Opening { get; set; }
+
+        public Dictionary<DateTime, Dictionary<int, int>> Leaves { get; set; }
+
+    }
+
+    public class LeaveTypeDto
+    {
+        public int Id { get; set; }
+
+        public string Name { get; set; }
+
+        public static Expression<Func<LeaveType, LeaveTypeDto>> Selector = e => new LeaveTypeDto
+        {
+            Id = e.Id,
+            Name = e.Name,
+        };
+
+    }
+
 }

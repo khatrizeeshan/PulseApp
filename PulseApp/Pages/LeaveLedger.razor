@@ -1,6 +1,8 @@
 ﻿@page "/leave-ledger"
 
 @using PulseApp.Data
+@using PulseApp.Helpers
+
 @inject NavigationManager NavigationManager
 @inject EmployeeService EmployeeService
 @inject CalendarService CalendarService
@@ -39,19 +41,45 @@ else
         </div>
     </div>
 
-    @if (EmployeeId > 0 && CalendarId > 0)
+    @if (EmployeeId > 0 && CalendarId > 0 && Ledger != null)
     {
-
-        <table class="table">
+        <table class="table table-bordered table-sm">
             <thead>
                 <tr>
                     <th>Date</th>
-                    <th>Leave</th>
-                    <th>Count</th>
+                    @foreach (var type in Ledger.LeaveTypes)
+                    {
+                        <th>@type.Name</th>
+                    }
                 </tr>
             </thead>
             <tbody>
-                @foreach (var leave in Leaves)
+                <tr>
+                    <td>Forwarded</td>
+                    @foreach (var type in Ledger.LeaveTypes)
+                    {
+                        <td class="text-center">@Ledger.Farward.GetValueOrNull(type.Id)</td>
+                    }
+                </tr>
+                <tr>
+                    <td>Opening</td>
+                    @foreach (var type in Ledger.LeaveTypes)
+                    {
+                        <td class="text-center">@Ledger.Opening.GetValueOrNull(type.Id)</td>
+                    }
+                </tr>
+                @foreach (var (date, leave) in Ledger.Leaves)
+                {
+                    <tr>
+                        <td>@date.ToShortDateString()</td>
+                        @foreach (var type in Ledger.LeaveTypes)
+                        {
+                            <td class="text-center">@leave.GetValueOrNull(type.Id)</td>
+                        }
+                    </tr>
+                }
+
+                @*@foreach (var leave in Leaves)
                 {
                     <tr>
                         <td>@leave.Date.ToShortDateString()</td>
@@ -64,7 +92,7 @@ else
                     <tr>
                         <td colspan="3">No record found.</td>
                     </tr>
-                }
+                }*@
             </tbody>
         </table>
     }
@@ -76,7 +104,7 @@ else
 
     private CalendarDto[] CalendarList { get; set; }
 
-    private LeaveDto[] Leaves { get; set; }
+    private LeaveLedgerDto Ledger { get; set; }
 
     private int EmployeeId { get; set; }
     private int CalendarId { get; set; }
@@ -123,11 +151,11 @@ else
     {
         if (EmployeeId == 0 || CalendarId == 0)
         {
-            Leaves = Array.Empty<LeaveDto>();
+            Ledger = null;
         }
         else
         {
-            Leaves = await LeaveService.GetLeaveLedger(EmployeeId, CalendarId);
+            Ledger = await LeaveService.GetLeaveLedger(EmployeeId, CalendarId);
         }
     }
 
