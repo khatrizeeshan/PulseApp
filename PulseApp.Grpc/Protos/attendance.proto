@@ -1,0 +1,87 @@
+syntax = "proto3";
+
+option csharp_namespace = "PulseApp.Protos";
+
+import "google/protobuf/wrappers.proto";
+
+package attendance;
+
+service AttendanceManager {
+  rpc GetAttendanceTypes (AttendanceTypeRequest) returns (AttendanceTypeResponse);
+  rpc GetMonthAttendance (MonthAttendanceRequest) returns (MonthAttendanceResponse);
+  rpc GetEmployeeAttendance (EmployeeAttendanceRequest) returns (EmployeeAttendanceResponse);
+  rpc MarkAttendance (MarkAttendanceRequest) returns (MarkAttendanceResponse);
+}
+
+message AttendanceTypeRequest {
+}
+
+message AttendanceTypeResponse {
+    repeated AttendanceTypeProto attendance_types = 1;
+}
+
+message AttendanceTypeProto {
+    int32 id = 1;
+    string code = 2;
+    string name = 3;
+    bool is_default = 4;
+}
+
+message MonthAttendanceRequest { 
+    int32 year = 1;
+    int32 month = 2;
+}
+
+message MonthAttendanceResponse { 
+    repeated EmployeeAttendanceProto employees = 1;
+}
+
+message EmployeeAttendanceRequest { 
+    int32 employee_id = 1;
+    int32 year = 2;
+}
+
+message EmployeeAttendanceResponse { 
+    repeated MonthAttendanceProto months = 1;
+}
+
+message MarkAttendanceRequest {
+    int32 employee_id = 1;
+    int32 year = 2;
+    int32 month = 3; 
+    int32 day = 4; 
+    int32 attendance_type_id = 5; 
+    int32 leave_type_id = 6; 
+    string comments = 7;
+}
+
+message MarkAttendanceResponse {
+
+}
+
+
+message EmployeeAttendanceProto {
+    int32 employee_id = 1;
+    string first_name = 2;
+    string last_name = 3;
+    int32 start_day = 4;
+    map<int32, DayAttendanceDetailProto> attendance = 5;
+}
+
+message MonthAttendanceProto {
+    int32 month = 1;
+    string month_name = 2;
+    int32 start_day = 3;
+    repeated int32 off_days = 4;
+    int32 days = 5;
+    map<int32, DayAttendanceDetailProto> attendance = 6;
+}
+
+message DayAttendanceDetailProto {
+    int32 attendance_type_id = 1;
+    string attendance_type_code = 2;
+    int32 leave_type_id = 3;
+    string leave_type_code = 4;
+    string comments = 5;
+}
+
