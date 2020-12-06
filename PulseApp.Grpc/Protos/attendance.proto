@@ -2,8 +2,6 @@ syntax = "proto3";
 
 option csharp_namespace = "PulseApp.Protos";
 
-import "google/protobuf/wrappers.proto";
-
 package attendance;
 
 service AttendanceManager {

@@ -1,0 +1,89 @@
+syntax = "proto3";
+
+option csharp_namespace = "PulseApp.Protos";
+
+import "google/protobuf/timestamp.proto";
+import "Protos/common.proto";
+
+package calendar;
+
+service CalendarManager {
+
+  rpc GetCalendars (common.EmptyRequest) returns (CalendarsResponse);
+  rpc GetCalendar (common.IdRequest) returns (CalendarResponse);
+  rpc LastCalendar (common.EmptyRequest) returns (CalendarResponse);
+  rpc DeleteCalendar (common.IdRequest) returns (common.EmptyResponse);
+  rpc AddCalendar (CalendarAddRequest) returns (common.EmptyResponse);
+  rpc UpdateCalendar (CalendarUpdateRequest) returns (common.EmptyResponse);
+
+  rpc GetDayTypes (common.EmptyRequest) returns (DayTypesResponse);
+  rpc GetCalendarDays (common.IdRequest) returns (CalendarDaysResponse);
+  rpc MarkDay (MarkDayRequest) returns (common.EmptyResponse);
+
+}
+
+message CalendarsResponse {
+    repeated CalendarProto calendars = 1;
+}
+
+message CalendarResponse {
+    CalendarProto calendar = 1;
+}
+
+message CalendarAddRequest {
+    google.protobuf.Timestamp start_date = 2;
+    google.protobuf.Timestamp end_date = 3;
+}
+
+message CalendarUpdateRequest {
+    int32 id = 1;
+    google.protobuf.Timestamp start_date = 2;
+    google.protobuf.Timestamp end_date = 3;
+}
+
+message CalendarDaysResponse {
+    repeated CalendarMonthProto months = 1;
+}
+
+message DayTypesResponse {
+    repeated DayTypeProto day_types = 1;
+}
+
+message MarkDayRequest {
+    int32 calendar_id = 1; 
+    int32 year = 2; 
+    int32 month = 3; 
+    int32 day = 4; 
+    int32 day_type_id = 6; 
+    string comments = 7;
+}
+
+message CalendarProto {
+    int32 id = 1;
+    google.protobuf.Timestamp start_date = 2;
+    google.protobuf.Timestamp end_date = 3;
+}
+
+message DayTypeProto {
+    string id = 1;
+    string code = 2;
+    string name = 3;
+}
+
+message CalendarMonthProto {
+    int32 month = 1;
+    string month_name = 2;
+    int32 year = 3;
+    int32 days = 4;
+    map<int32, CalendarDayProto> calendar_days = 5;
+}
+
+message CalendarDayProto {
+    int32 day_type_id = 1;
+    int32 day_type_code = 2;
+    string comments = 3;
+}
+
+
+
+

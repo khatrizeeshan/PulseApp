@@ -1,0 +1,17 @@
+syntax = "proto3";
+
+option csharp_namespace = "PulseApp.Protos";
+
+package common;
+
+message EmptyRequest {
+
+}
+
+message EmptyResponse {
+
+}
+
+message IdRequest {
+	int32 id = 1;
+}

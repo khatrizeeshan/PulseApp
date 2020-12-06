@@ -1,0 +1,51 @@
+syntax = "proto3";
+
+option csharp_namespace = "PulseApp.Protos";
+
+import "google/protobuf/timestamp.proto";
+import "Protos/common.proto";
+
+package employee;
+
+service EmployeeManager {
+
+  rpc GetEmployees (common.EmptyRequest) returns (EmployeesResponse);
+  rpc GetEmployee (common.IdRequest) returns (EmployeeResponse);
+  rpc DeleteEmployee (common.IdRequest) returns (common.EmptyResponse);
+  rpc AddEmployee (EmployeeAddRequest) returns (common.EmptyResponse);
+  rpc UpdateEmployee (EmployeeUpdateRequest) returns (common.EmptyResponse);
+
+}
+
+message EmployeesResponse {
+    repeated EmployeeProto employees = 1;
+}
+
+message EmployeeResponse {
+    EmployeeProto employee = 1;
+}
+
+message EmployeeAddRequest {
+    google.protobuf.Timestamp start_date = 2;
+    google.protobuf.Timestamp end_date = 3;
+}
+
+message EmployeeUpdateRequest {
+    int32 id = 1;
+    string first_name = 2;
+    string last_name = 3;
+    string email = 4;
+}
+
+message EmployeeProto {
+    int32 id = 1;
+    string first_name = 2;
+    string last_name = 3;
+    string email = 4;
+    google.protobuf.Timestamp joining = 5;
+}
+
+
+
+
+
