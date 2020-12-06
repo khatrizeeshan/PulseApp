@@ -27,7 +27,7 @@ namespace PulseApp.Services
 
         public IServiceProvider Provider { get; set; }
 
-        public override async Task<AttendanceTypeResponse> GetAttendanceTypes(AttendanceTypeRequest request, ServerCallContext context)
+        public override async Task<AttendanceTypeResponse> GetAttendanceTypes(EmptyRequest request, ServerCallContext context)
         {
             using var db = DbFactory.CreateDbContext();
 
@@ -94,7 +94,7 @@ namespace PulseApp.Services
             return response;
         }
 
-        public override async Task<MarkAttendanceResponse> MarkAttendance(MarkAttendanceRequest request, ServerCallContext context)
+        public override async Task<EmptyResponse> MarkAttendance(MarkAttendanceRequest request, ServerCallContext context)
         {
             var date = new DateTime(request.Year, request.Month, request.Day);
             using var db = DbFactory.CreateDbContext();
@@ -148,7 +148,7 @@ namespace PulseApp.Services
 
             await db.SaveChangesAsync();
 
-            return new MarkAttendanceResponse();
+            return new EmptyResponse();
         }
 
         private async Task<DateTime[]> GetOffDates(DateTime start, DateTime end)
@@ -189,6 +189,7 @@ namespace PulseApp.Services
             LeaveTypeCode = e.LeaveType.Code,
             Comments = e.Comments,
         };
+
     }
 
     //public class MonthAttendanceDto
@@ -250,14 +251,7 @@ namespace PulseApp.Services
                     var day = attendances.FirstOrDefault(a => a.EmployeeId == each.Id && a.Day == i);
                     if (day != null)
                     {
-                        employee.Attendance.Add(i, new DayAttendanceDetailProto()
-                        {
-                            AttendanceTypeId = day.AttendanceTypeId,
-                            AttendanceTypeCode = day.AttendanceTypeCode,
-                            LeaveTypeId = day.LeaveTypeId.GetValueOrDefault(),
-                            LeaveTypeCode = day.LeaveTypeCode,
-                            Comments = day.Comments
-                        });
+                        employee.Attendance.Add(i, day.ToProto());
                     }
                 }
 
@@ -286,14 +280,7 @@ namespace PulseApp.Services
                     var day = attendances.FirstOrDefault(a => a.Month == current && a.Day == i);
                     if (day != null)
                     {
-                        month.Attendance.Add(i, new DayAttendanceDetailProto()
-                        {
-                            AttendanceTypeId = day.AttendanceTypeId,
-                            AttendanceTypeCode = day.AttendanceTypeCode,
-                            LeaveTypeId = day.LeaveTypeId.GetValueOrDefault(),
-                            LeaveTypeCode = day.LeaveTypeCode,
-                            Comments = day.Comments
-                        });
+                        month.Attendance.Add(i, day.ToProto());
                     }
                 }
 
@@ -316,5 +303,24 @@ namespace PulseApp.Services
             }
             
         }
+
+        public static DayAttendanceDetailProto ToProto(this AttendanceDto dto)
+        {
+            var proto = new DayAttendanceDetailProto()
+            {
+                AttendanceTypeId = dto.AttendanceTypeId,
+                AttendanceTypeCode = dto.AttendanceTypeCode,
+                Comments = dto.Comments
+            };
+
+            if (dto.LeaveTypeId.HasValue)
+            {
+                proto.LeaveTypeId = dto.LeaveTypeId.GetValueOrDefault(0);
+                proto.LeaveTypeCode = dto.LeaveTypeCode;
+            }
+
+            return proto;
+        }
+
     }
 }

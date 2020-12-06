@@ -87,7 +87,7 @@ namespace PulseApp.Services
             return new IdResponse { Id = employee.Id };
         }
 
-        public async Task<int> GetCalendarIdAsync(int employeeId, DateTime date)
+        internal async Task<int> GetCalendarIdAsync(int employeeId, DateTime date)
         {
             using var db = DbFactory.CreateDbContext();
             var employee = await db.Employees.Where(e => e.Id == employeeId)
@@ -99,7 +99,7 @@ namespace PulseApp.Services
             }
 
             var service = Provider.GetRequiredService<CalendarService>();
-            return await service.GetCalendarIdAsync(date);
+            return await service.GetCalendarId(date);
         }
 
     }

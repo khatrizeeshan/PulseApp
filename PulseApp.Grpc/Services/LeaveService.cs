@@ -62,7 +62,7 @@ namespace PulseApp.Services
             return response;
         }
 
-        public override async Task<LeaveTypeResponse> GetLeaveTypes(LeaveTypeRequest request, ServerCallContext context)
+        public override async Task<LeaveTypeResponse> GetLeaveTypes(EmptyRequest request, ServerCallContext context)
         {
             using var db = DbFactory.CreateDbContext();
 
@@ -102,6 +102,7 @@ namespace PulseApp.Services
         public static Expression<Func<LeaveType, LeaveTypeProto>> Selector = e => new LeaveTypeProto
         {
             Id = e.Id,
+            Code = e.Code,
             Name = e.Name,
         };
 

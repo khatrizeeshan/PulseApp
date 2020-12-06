@@ -6,10 +6,6 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <None Remove="Protos\employee.proto" />
-  </ItemGroup>
-
-  <ItemGroup>
     <Protobuf Include="Protos\employee.proto" GrpcServices="Server" />
     <Protobuf Include="Protos\common.proto" GrpcServices="Server" />
     <Protobuf Include="Protos\attendance.proto" GrpcServices="Server" />
@@ -19,6 +15,7 @@
 
   <ItemGroup>
     <PackageReference Include="Grpc.AspNetCore" Version="2.33.1" />
+    <PackageReference Include="Grpc.AspNetCore.Web" Version="2.33.1" />
     <PackageReference Include="Microsoft.EntityFrameworkCore" Version="5.0.0" />
     <PackageReference Include="Microsoft.EntityFrameworkCore.SqlServer" Version="5.0.0" />
   </ItemGroup>

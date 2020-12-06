@@ -1,0 +1,228 @@
+﻿@page "/employees/{id:int}/attendance/{year:int}"
+
+@using PulseApp.Helpers
+@using PulseApp.Constants
+@using PulseApp.Pages
+@using PulseApp.Protos
+
+@inject NavigationManager NavigationManager
+@inject AttendanceManager.AttendanceManagerClient AttendanceService
+@inject EmployeeManager.EmployeeManagerClient EmployeeService
+
+<h1>Attendance</h1>
+
+<p>This page shows attendance of an employee for the selected year.</p>
+
+@if (Months == null)
+{
+    <p><em>Loading...</em></p>
+}
+else
+{
+    <div class="d-flex justify-content-start">
+        <div class="form-group">
+            <label for="attendanceType">Employee:</label>
+            <select @bind="SelectedEmployeeId" @bind:event="oninput" @onchange="OnChangeEmployee" class="form-control" id="employee">
+                @foreach (var employee in EmployeeList)
+                {
+                    <option value="@employee.Id">@employee.FirstName @employee.LastName</option>
+                }
+            </select>
+        </div>
+    </div>
+    <div class="d-flex justify-content-end">
+        <button @onclick="OnPrevious" type="button" class="btn btn-link">Previous</button>
+        <h2 class="text-right">@Year</h2>
+        <button @onclick="OnNext" type="button" class="btn btn-link">Next</button>
+    </div>
+
+    if (Months.Length > 0)
+    {
+        <table class="table table-bordered table-sm">
+            <thead>
+                <tr>
+                    <th style="width: 13.2%">Month</th>
+                    @for (int i = 1; i <= 31; i++)
+                    {
+                        <th style="width: 2.8%" class="text-center">@i</th>
+                    }
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var month in Months)
+                {
+                    <tr>
+                        <td>@month.MonthName</td>
+                        @for (int i = 1; i < month.StartDay; i++)
+                        {
+                            <td class="table-secondary"></td>
+                        }
+                        @for (int i = month.StartDay; i <= month.Days; i++)
+                        {
+                            var day = i;
+                            month.Attendance.TryGetValue(i, out DayAttendanceDetailProto detail);
+                            <td class="text-center p-0">
+                                <div class="d-flex flex-column align-content-center" style="height: 100%;">
+                                    <div style="cursor: pointer;" class="@GetClass(month.OffDays.ToArray(), i, "main") align-self-stretch"
+                                         @onclick="async() => await MarkAttendance(Id, month.Month, day)">
+                                        <small>@detail?.LeaveTypeCode@detail?.AttendanceTypeCode.</small>
+                                    </div>
+                                    <div style="cursor: pointer;" class="mt-auto @GetClass(month.OffDays.ToArray(), i, "detail") align-self-stretch"
+                                         @onclick="() => OnShowModal(Id, day, month.Month, detail?.AttendanceTypeId,  detail?.LeaveTypeId, detail?.Comments)">
+                                        <small>c</small>
+                                    </div>
+                                </div>
+                            </td>
+                        }
+                        @for (int i = month.Days + 1; i <= 31; i++)
+                        {
+                            <td class="table-secondary"></td>
+                        }
+                    </tr>
+
+                }
+            </tbody>
+        </table>
+
+    }
+    else
+    {
+        <div>No record found for selected year.</div>
+    }
+
+    @if (ShowModal && Current != null)
+    {
+        <Attendance Current="Current" OnCancelCallback="OnCancelModal" OnConfirmCallback="OnConfirmModal"></Attendance>
+    }
+}
+
+@code {
+
+    [Parameter]
+    public int Id { get; set; }
+
+    [Parameter]
+    public int Year { get; set; }
+
+    private EmployeeProto[] EmployeeList { get; set; }
+
+    private MonthAttendanceProto[] Months { get; set; }
+
+    private string SelectedEmployeeId { get; set; }
+
+    private bool ShowModal { get; set; }
+
+    private MarkAttendanceRequest Current { get; set; }
+
+    protected override async Task OnInitializedAsync()
+    {
+        await GetEmployees();
+        await LoadCurrentYear();
+
+        SelectedEmployeeId = Id.ToString();
+    }
+
+    private async Task LoadCurrentYear()
+    {
+        await Get();
+    }
+
+    private async Task Get()
+    {
+        var request = new EmployeeAttendanceRequest() { EmployeeId = Id, Year = Year };
+        var response = await AttendanceService.GetEmployeeAttendanceAsync(request);
+        Months = response.Months.ToArray();
+    }
+
+    private async Task GetEmployees()
+    {
+        var request = new EmptyRequest();
+        var response = await EmployeeService.GetEmployeesAsync(request);
+        EmployeeList = response.Employees.ToArray();
+    }
+
+
+    private async Task MarkAttendance(int employeeId, int month, int day)
+    {
+        var request = new MarkAttendanceRequest() { EmployeeId = employeeId, Month = month, Day = day, Year = Year, AttendanceTypeId = Constants.AttendanceTypes.Full };
+        await MarkAttendance(request);
+    }
+
+    private async Task MarkAttendance(MarkAttendanceRequest request)
+    {
+        await AttendanceService.MarkAttendanceAsync(request);
+        await Get();
+    }
+
+    private async Task OnNext()
+    {
+        await Go(Year + 1);
+    }
+
+    private async Task OnPrevious()
+    {
+        await Go(Year - 1);
+    }
+
+    private async Task Go(int year)
+    {
+        NavigationManager.NavigateTo($"/employees/{Id}/attendance/{year}");
+        Year = year;
+        await LoadCurrentYear();
+    }
+
+    private async Task OnChangeEmployee(ChangeEventArgs e)
+    {
+        Id = int.Parse(SelectedEmployeeId);
+        await Go(Year);
+    }
+
+    private void OnShowModal(int employeeId, int day, int month, int? attendanceTypeId, int? leaveTypeId = null, string comments = "")
+    {
+        Current = new MarkAttendanceRequest
+        {
+            EmployeeId = employeeId,
+            Day = day,
+            Month = month,
+            Year = Year,
+            AttendanceTypeId = attendanceTypeId.GetValueOrDefault(Constants.AttendanceTypes.Full),
+            LeaveTypeId = leaveTypeId.GetValueOrDefault(Constants.LeaveTypes.Casual),
+            Comments = comments,
+        };
+
+        ShowModal = true;
+    }
+
+    private void OnCancelModal()
+    {
+        Current = null;
+        ShowModal = false;
+    }
+
+    private async Task OnConfirmModal()
+    {
+        await MarkAttendance(Current);
+        ShowModal = false;
+    }
+
+    private string GetClass(int[] offDays, int day, string position)
+    {
+        switch (position)
+        {
+            case "main":
+                return offDays.Contains(day) ? "btn-secondary" :
+                                                //day == today ? "btn-info" :
+                                                "btn-light";
+            case "detail":
+                return offDays.Contains(day) ? "btn-secondary" :
+                                                //day == today ? "btn-secondary" :
+                                                "btn-warning";
+            case "header":
+                return offDays.Contains(day) ? "table-secondary" :
+                                                //day == today ? "table-info" :
+                                                string.Empty;
+        }
+
+        return string.Empty;
+    }
+}

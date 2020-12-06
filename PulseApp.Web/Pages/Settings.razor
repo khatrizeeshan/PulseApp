@@ -1,0 +1,84 @@
+﻿@*@page "/settings"
+
+@using PulseApp.Data
+@inject NavigationManager NavigationManager
+@inject EmployeeService EmployeeService
+
+<h1>Settings</h1>
+
+<p>This page allows to configure different settings.</p>
+
+@if (settings == null)
+{
+    <p><em>Loading...</em></p>
+}
+else
+{
+    <form>
+        <div class="form-row">
+            <div class="form-group col-md-6">
+                <label for="firstName">First Name</label>
+                <input @bind="employee.FirstName" type="text" class="form-control" id="firstName" placeholder="First Name">
+            </div>
+            <div class="form-group col-md-6">
+                <label for="lastName">Last Name</label>
+                <input @bind="employee.LastName" type="text" class="form-control" id="lastName" placeholder="Last Name">
+            </div>
+        </div>
+        <div class="form-row">
+            <div class="form-group col-md-6">
+                <label for="email">Email</label>
+                <input @bind="employee.Email" type="email" class="form-control" id="email" placeholder="Email">
+            </div>
+            <div class="form-group col-md-6">
+                <label for="joining">Joining</label>
+                <input type="text" class="form-control" id="joining" placeholder="Joining">
+            </div>
+        </div>
+        <button type="button" @onclick="OnSave" class="btn btn-primary">Save</button>
+    </form>
+}
+
+@code {
+
+    private SettingsDto settings;
+
+    [Parameter]
+    public int Id { get; set; }
+
+    protected override async Task OnInitializedAsync()
+    {
+        await Get();
+    }
+
+    private async Task Get()
+    {
+        if (Id > 0)
+        {
+            employee = await EmployeeService.GetEmployeeAsync(Id);
+        }
+        else
+        {
+            employee = new EmployeeDto();
+        }
+    }
+
+    private async Task OnSave()
+    {
+        if (Id > 0)
+        {
+            await EmployeeService.UpdateAsync(Id, employee);
+        }
+        else
+        {
+            Id = await EmployeeService.AddAsync(employee);
+            GoAtEmployee(Id);
+        }
+    }
+
+    private void GoAtEmployee(int id)
+    {
+        NavigationManager.NavigateTo($"/employees/{id}");
+    }
+}*@
+

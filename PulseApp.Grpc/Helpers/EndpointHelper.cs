@@ -8,7 +8,10 @@ namespace PulseApp.Helpers
     {
         public static void Map(this IEndpointRouteBuilder endpoints)
         {
-            endpoints.MapGrpcService<LeaveService>();
+            endpoints.MapGrpcService<AttendanceService>().RequireCors("AllowAll");
+            endpoints.MapGrpcService<CalendarService>().RequireCors("AllowAll");
+            endpoints.MapGrpcService<EmployeeService>().RequireCors("AllowAll");
+            endpoints.MapGrpcService<LeaveService>().RequireCors("AllowAll");
         }
     }
 }
