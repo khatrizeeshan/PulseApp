@@ -13,7 +13,7 @@ service CalendarManager {
   rpc GetCalendar (common.IdRequest) returns (CalendarResponse);
   rpc LastCalendar (common.EmptyRequest) returns (CalendarResponse);
   rpc DeleteCalendar (common.IdRequest) returns (common.EmptyResponse);
-  rpc AddCalendar (CalendarAddRequest) returns (common.EmptyResponse);
+  rpc AddCalendar (CalendarAddRequest) returns (common.IdResponse);
   rpc UpdateCalendar (CalendarUpdateRequest) returns (common.EmptyResponse);
 
   rpc GetDayTypes (common.EmptyRequest) returns (DayTypesResponse);
@@ -65,7 +65,7 @@ message CalendarProto {
 }
 
 message DayTypeProto {
-    string id = 1;
+    int32 id = 1;
     string code = 2;
     string name = 3;
 }
@@ -80,7 +80,7 @@ message CalendarMonthProto {
 
 message CalendarDayProto {
     int32 day_type_id = 1;
-    int32 day_type_code = 2;
+    string day_type_code = 2;
     string comments = 3;
 }
 

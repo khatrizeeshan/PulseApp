@@ -15,3 +15,7 @@ message EmptyResponse {
 message IdRequest {
 	int32 id = 1;
 }
+
+message IdResponse {
+	int32 id = 1;
+}

@@ -8,12 +8,14 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Linq.Expressions;
 using System.Threading.Tasks;
+using PulseApp.Protos;
+using Grpc.Core;
+using Google.Protobuf.WellKnownTypes;
 
 namespace PulseApp.Services
 {
-    public class CalendarService
+    public class CalendarService : CalendarManager.CalendarManagerBase
     {
-
         public CalendarService(IServiceProvider provider, IDbContextFactory<ApplicationDbContext> dbFactory)
         {
             this.Provider = provider;
@@ -24,100 +26,134 @@ namespace PulseApp.Services
 
         public IServiceProvider Provider { get; set; }
 
-        public async Task<CalendarDto[]> GetCalendarsAsync()
+        public override async Task<CalendarsResponse> GetCalendars(EmptyRequest request, ServerCallContext context)
         {
-            using var context = DbFactory.CreateDbContext();
-            return await context.Calendars
+            using var db = DbFactory.CreateDbContext();
+
+            var calendars = await db.Calendars
+                        .Select(CalendarDto.Selector)
+                        .ToArrayAsync();
+
+            var response = new CalendarsResponse();
+            response.Calendars.Add(calendars);
+
+            return response;
+        }
+
+        public override async Task<CalendarResponse> GetCalendar(IdRequest request, ServerCallContext context)
+        {
+            using var db = DbFactory.CreateDbContext();
+            var calendar = await db.Calendars
                     .Select(CalendarDto.Selector)
-                    .ToArrayAsync();
+                    .SingleOrDefaultAsync(e => e.Id == request.Id);
+
+            var response = new CalendarResponse();
+            response.Calendar = calendar;
+
+            return response;
+
         }
 
-        public async Task<CalendarDto> GetCalendarAsync(int id)
+        public override async Task<EmptyResponse> DeleteCalendar(IdRequest request, ServerCallContext context)
         {
-            using var context = DbFactory.CreateDbContext();
-            return await context.Calendars
-                .Select(CalendarDto.Selector)
-                .SingleOrDefaultAsync(e => e.Id == id);
+            using var db = DbFactory.CreateDbContext();
+            db.Calendars.Remove(new Calendar() { Id = request.Id });
+            await db.SaveChangesAsync();
+
+            return new EmptyResponse();
         }
 
-        public async Task DeleteAsync(int id)
+        public override async Task<EmptyResponse> UpdateCalendar(CalendarUpdateRequest request, ServerCallContext context)
         {
-            using var context = DbFactory.CreateDbContext();
-            context.Calendars.Remove(new Calendar() { Id = id });
-            await context.SaveChangesAsync();
+            using var db = DbFactory.CreateDbContext();
+            var existing = await db.Calendars.SingleOrDefaultAsync(e => e.Id == request.Id);
+            existing.StartDate = request.StartDate.ToDateTime();
+            existing.EndDate = request.EndDate.ToDateTime();
+            db.Calendars.Update(existing);
+            await db.SaveChangesAsync();
+
+            return new EmptyResponse();
         }
 
-        public async Task UpdateAsync(int id, CalendarDto dto)
-        {
-            using var context = DbFactory.CreateDbContext();
-            var existing = await context.Calendars.SingleOrDefaultAsync(e => e.Id == id);
-            existing.Fill(dto);
-            context.Calendars.Update(existing);
-            await context.SaveChangesAsync();
-        }
 
-        public async Task<int> AddAsync(CalendarDto dto)
+        public override async Task<IdResponse> AddCalendar(CalendarAddRequest request, ServerCallContext context)
         {
-            using var context = DbFactory.CreateDbContext();
+            using var db = DbFactory.CreateDbContext();
             var settings = Provider.GetRequiredService<SettingService>();
 
-            var calendar = new Calendar();
-            calendar.Fill(dto);
-            context.SetId(calendar);
+            var calendar = new Calendar
+            {
+                StartDate = request.StartDate.ToDateTime(),
+                EndDate = request.EndDate.ToDateTime()
+            };
+            db.SetId(calendar);
 
             var calendarDays = calendar.MakeWeekends(settings.Weekends);
-            context.SetId(calendarDays);
+            db.SetId(calendarDays);
 
-            await context.Calendars.AddAsync(calendar);
-            await context.CalendarDays.AddRangeAsync(calendarDays);
-            await context.SaveChangesAsync();
+            await db.Calendars.AddAsync(calendar);
+            await db.CalendarDays.AddRangeAsync(calendarDays);
+            await db.SaveChangesAsync();
 
-            return calendar.Id;
+            return new IdResponse() { Id = calendar.Id };
         }
 
-        public async Task<int> GetLastIdAsync()
+        public override async Task<CalendarResponse> LastCalendar(EmptyRequest request, ServerCallContext context)
         {
-            using var context = DbFactory.CreateDbContext();
-            return await context.Calendars.OrderByDescending(c => c.StartDate)
-                .Select(c => c.Id).FirstOrDefaultAsync();
+            using var db = DbFactory.CreateDbContext();
+            var calendar = await db.Calendars
+                                .OrderByDescending(c => c.StartDate)
+                                .Select(CalendarDto.Selector)
+                                .FirstOrDefaultAsync();
+
+            var response = new CalendarResponse();
+            response.Calendar = calendar;
+
+            return response;
         }
 
-        public async Task<DayType[]> GetDayTypesAsync()
+        public override async Task<DayTypesResponse> GetDayTypes(EmptyRequest request, ServerCallContext context)
         {
-            using var context = DbFactory.CreateDbContext();
+            using var db = DbFactory.CreateDbContext();
 
-            return await context.DayTypes
+            var dayTypes = await db.DayTypes
+                .Select(DayTypeDto.Selector)
                 .ToArrayAsync();
+
+            var response = new DayTypesResponse();
+            response.DayTypes.Add(dayTypes);
+
+            return response;
         }
 
-        public async Task<CalendayDayMonthDto[]> GetCalendarDaysAsync(int calendarId)
+        public override async Task<CalendarDaysResponse> GetCalendarDays(IdRequest request, ServerCallContext context)
         {
-            using var context = DbFactory.CreateDbContext();
+            using var db = DbFactory.CreateDbContext();
 
-            var calendar = await context.Calendars
-                    .SingleOrDefaultAsync(a => a.Id == calendarId);
+            var calendar = await db.Calendars
+                    .SingleOrDefaultAsync(a => a.Id == request.Id);
 
+            var response = new CalendarDaysResponse();
             if(calendar == null)
             {
-                return Array.Empty<CalendayDayMonthDto>();
+                return response;
             }
 
-            var calendarDays = await context.CalendarDays
-                    .Where(a => a.CalendarId == calendarId)
+            var calendarDays = await db.CalendarDays
+                    .Where(a => a.CalendarId == request.Id)
                     .Select(CalendarDayDto.Selector)
                     .ToArrayAsync();
 
-            var result = new List<CalendayDayMonthDto>();
-            result.Fill(calendarDays, calendar.StartDate, calendar.EndDate);
-            return result.ToArray();
+            response.Fill(calendarDays, calendar.StartDate, calendar.EndDate);
+            return response;
         }
 
         public async Task MarkDayAsync(int calendarId, int year, int month, int day, int dayTypeId, string comments = null)
         {
             var date = new DateTime(year, month, day);
-            using var context = DbFactory.CreateDbContext();
+            using var db = DbFactory.CreateDbContext();
 
-            var calendarDay = await context.CalendarDays.SingleOrDefaultAsync(e => e.CalendarId == calendarId && e.Date == date);
+            var calendarDay = await db.CalendarDays.SingleOrDefaultAsync(e => e.CalendarId == calendarId && e.Date == date);
             if (calendarDay == null)
             {
                 calendarDay = new CalendarDay()
@@ -128,24 +164,24 @@ namespace PulseApp.Services
                     Comments = comments,
                 };
 
-                context.SetId(calendarDay);
-                await context.CalendarDays.AddAsync(calendarDay);
+                db.SetId(calendarDay);
+                await db.CalendarDays.AddAsync(calendarDay);
             }
             else
             {
                 calendarDay.DayTypeId = dayTypeId;
-                context.CalendarDays.Update(calendarDay);
+                db.CalendarDays.Update(calendarDay);
             }
 
-            await context.SaveChangesAsync();
+            await db.SaveChangesAsync();
         }
 
         public async Task<int[]> GetOffDays(int year, int month)
         {
             var (start, end) = DateTimeHelper.MonthRange(year, month);
 
-            using var context = DbFactory.CreateDbContext();
-            var offDays = await context.CalendarDays
+            using var db = DbFactory.CreateDbContext();
+            var offDays = await db.CalendarDays
                 .Where(a => a.Date >= start && a.Date <= end)
                 .Select(d => d.Date.Day)
                 .ToArrayAsync();
@@ -155,8 +191,8 @@ namespace PulseApp.Services
 
         public async Task<DateTime[]> GetOffDates(DateTime start, DateTime end)
         {
-            using var context = DbFactory.CreateDbContext();
-            var offDates = await context.CalendarDays
+            using var db = DbFactory.CreateDbContext();
+            var offDates = await db.CalendarDays
                 .Where(a => a.Date >= start && a.Date <= end)
                 .Select(d => d.Date)
                 .ToArrayAsync();
@@ -166,8 +202,8 @@ namespace PulseApp.Services
 
         public async Task<int> GetCalendarIdAsync(DateTime date)
         {
-            using var context = DbFactory.CreateDbContext();
-            var calendarId = await context.Calendars
+            using var db = DbFactory.CreateDbContext();
+            var calendarId = await db.Calendars
                     .Where(a => date >= a.StartDate && date <= a.EndDate)
                     .Select(c => c.Id)
                     .SingleOrDefaultAsync();
@@ -183,17 +219,24 @@ namespace PulseApp.Services
 
     public class CalendarDto
     {
-        public int Id { get; set; }
-        public DateTime StartDate { get; set; }
-        public DateTime EndDate { get; set; }
-
-        public static Expression<Func<Calendar, CalendarDto>> Selector = e => new CalendarDto
+        public static Expression<Func<Calendar, CalendarProto>> Selector = e => new CalendarProto
         {
             Id = e.Id,
-            StartDate = e.StartDate,
-            EndDate = e.EndDate,
+            StartDate = Timestamp.FromDateTime(e.StartDate),
+            EndDate = Timestamp.FromDateTime(e.EndDate),
         };
     }
+
+    public class DayTypeDto
+    {
+        public static Expression<Func<DayType, DayTypeProto>> Selector = e => new DayTypeProto
+        {
+            Id = e.Id,
+            Code = e.Code,
+            Name = e.Name,
+        };
+    }
+
 
     public class CalendarDayDto
     {
@@ -223,36 +266,9 @@ namespace PulseApp.Services
         };
     }
 
-    public class CalendayDayMonthDto
-    {
-        public int Month { get; set; }
-        public string MonthName { get; set; }
-        public int Year { get; set; }
-        public int Days { get; set; }
-        public Dictionary<int, CalendarDayDetailDto> CalendarDays { get; set; }
-    }
-
-    public class CalendarDayDetailDto
-    {
-        public int DayTypeId { get; set; }
-        public string DayTypeCode { get; set; }
-        public string Comments { get; set; }
-    }
-
     public static class CalendarExtensions
     {
-        public static void Fill(this Calendar calendar, CalendarDto dto)
-        {
-            calendar.StartDate = dto.StartDate;
-            calendar.EndDate = dto.EndDate;
-        }
-
-        public static string ToRangeString(this CalendarDto dto)
-        {
-            return $"{dto.StartDate.ToShortDateString()} - {dto.EndDate.ToShortDateString()}";
-        }
-
-        public static void Fill(this List<CalendayDayMonthDto> destination, CalendarDayDto[] days, DateTime start, DateTime end)
+        public static void Fill(this CalendarDaysResponse response, CalendarDayDto[] days, DateTime start, DateTime end)
         {
             var date = start;
             while (date <= end)
@@ -260,13 +276,12 @@ namespace PulseApp.Services
                 var month = date.Month;
                 var year = date.Year;
                 var firstDay = DateTimeHelper.FirstDay(year, month);
-                var dto = new CalendayDayMonthDto()
+                var proto = new CalendarMonthProto()
                 {
                     Month = month,
                     MonthName = DateTimeHelper.GetMonthName(month),
                     Year = year,
                     Days = DateTime.DaysInMonth(year, month),
-                    CalendarDays = new Dictionary<int, CalendarDayDetailDto>(),
                 };
 
                 for (int i = 0; i <= 31; i++)
@@ -274,7 +289,7 @@ namespace PulseApp.Services
                     var day = days.FirstOrDefault(a => a.Month == month && a.Day == i);
                     if (day != null)
                     {
-                        dto.CalendarDays.Add(i, new CalendarDayDetailDto()
+                        proto.CalendarDays.Add(i, new CalendarDayProto()
                         {
                             DayTypeId = day.DayTypeId,
                             DayTypeCode = day.DayTypeCode,
@@ -283,7 +298,7 @@ namespace PulseApp.Services
                     }
                 }
 
-                destination.Add(dto);
+                response.Months.Add(proto);
                 date = date.AddMonths(1);
             }
         }
