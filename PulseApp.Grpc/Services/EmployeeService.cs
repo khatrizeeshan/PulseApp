@@ -1,8 +1,11 @@
+using Google.Protobuf.WellKnownTypes;
+using Grpc.Core;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using PulseApp.Data;
 using PulseApp.Helpers;
 using PulseApp.Models;
+using PulseApp.Protos;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -11,7 +14,7 @@ using System.Threading.Tasks;
 
 namespace PulseApp.Services
 {
-    public class EmployeeService
+    public class EmployeeService : EmployeeManager.EmployeeManagerBase
     {
 
         public EmployeeService(IServiceProvider provider, IDbContextFactory<ApplicationDbContext> dbFactory)
@@ -23,54 +26,71 @@ namespace PulseApp.Services
         public IDbContextFactory<ApplicationDbContext> DbFactory { get; set; }
         public IServiceProvider Provider { get; set; }
 
-        public async Task<EmployeeDto[]> GetEmployeesAsync()
+        public override async Task<EmployeesResponse> GetEmployees(EmptyRequest request, ServerCallContext context)
         {
-            using var context = DbFactory.CreateDbContext();
-            return await context.Employees
+            using var db = DbFactory.CreateDbContext();
+            var employees = await db.Employees
                     .Select(EmployeeDto.Selector)
                     .ToArrayAsync();
+
+            var response = new EmployeesResponse();
+            response.Employees.Add(employees);
+
+            return response;
         }
 
-        public async Task<EmployeeDto> GetEmployeeAsync(int id)
+
+        public override async Task<EmployeeResponse> GetEmployee(IdRequest request, ServerCallContext context)
         {
-            using var context = DbFactory.CreateDbContext();
-            return await context.Employees
+            using var db = DbFactory.CreateDbContext();
+            var employee = await db.Employees
                 .Select(EmployeeDto.Selector)
-                .SingleOrDefaultAsync(e => e.Id == id);
+                .SingleOrDefaultAsync(e => e.Id == request.Id);
+
+            return new EmployeeResponse() { Employee = employee };
         }
 
-        public async Task DeleteAsync(int id)
+        public override async Task<EmptyResponse> DeleteEmployee(IdRequest request, ServerCallContext context)
         {
-            using var context = DbFactory.CreateDbContext();
-            context.Employees.Remove(new Employee() { Id = id });
-            await context.SaveChangesAsync();
+            using var db = DbFactory.CreateDbContext();
+            db.Employees.Remove(new Employee() { Id = request.Id });
+            await db.SaveChangesAsync();
+
+            return new EmptyResponse();
         }
 
-        public async Task UpdateAsync(int id, EmployeeDto dto)
+        public override async Task<EmptyResponse> UpdateEmployee(EmployeeUpdateRequest request, ServerCallContext context)
         {
-            using var context = DbFactory.CreateDbContext();
-            var existing = await context.Employees.SingleOrDefaultAsync(e => e.Id == id);
-            existing.Fill(dto);
-            context.Employees.Update(existing);
-            await context.SaveChangesAsync();
+            using var db = DbFactory.CreateDbContext();
+            var existing = await db.Employees.SingleOrDefaultAsync(e => e.Id == request.Id);
+            existing.FirstName = request.FirstName;
+            existing.LastName = request.LastName;
+            existing.Email = request.Email;
+            db.Employees.Update(existing);
+            await db.SaveChangesAsync();
+
+            return new EmptyResponse();
         }
 
-        public async Task<int> AddAsync(EmployeeDto dto)
+        public override async Task<IdResponse> AddEmployee(EmployeeAddRequest request, ServerCallContext context)
         {
-            using var context = DbFactory.CreateDbContext();
+            using var db = DbFactory.CreateDbContext();
             var employee = new Employee();
-            employee.Fill(dto);
-            context.SetId(employee);
-            await context.Employees.AddAsync(employee);
-            await context.SaveChangesAsync();
+            employee.FirstName = request.FirstName;
+            employee.LastName = request.LastName;
+            employee.Email = request.Email;
+            employee.Joining = request.Joining.ToDateTime();
+            db.SetId(employee);
+            await db.Employees.AddAsync(employee);
+            await db.SaveChangesAsync();
 
-            return employee.Id;
+            return new IdResponse { Id = employee.Id };
         }
 
         public async Task<int> GetCalendarIdAsync(int employeeId, DateTime date)
         {
-            using var context = DbFactory.CreateDbContext();
-            var employee = await context.Employees.Where(e => e.Id == employeeId)
+            using var db = DbFactory.CreateDbContext();
+            var employee = await db.Employees.Where(e => e.Id == employeeId)
                                         .Select(EmployeeJoiningDto.Selector)
                                         .SingleOrDefaultAsync();
 
@@ -92,13 +112,22 @@ namespace PulseApp.Services
         public string Email { get; set; }
         public DateTime Joining { get; set; }
 
-        public static Expression<Func<Employee, EmployeeDto>> Selector = e => new EmployeeDto
+        public static Expression<Func<Employee, EmployeeDto>> SelectorDto = e => new EmployeeDto
         {
             Id = e.Id,
             FirstName = e.FirstName,
             LastName = e.LastName,
             Email = e.Email,
-            Joining = e.Joining,
+            Joining = e.Joining
+        };
+
+        public static Expression<Func<Employee, EmployeeProto>> Selector = e => new EmployeeProto
+        {
+            Id = e.Id,
+            FirstName = e.FirstName,
+            LastName = e.LastName,
+            Email = e.Email,
+            Joining = Timestamp.FromDateTime(e.Joining),
         };
     }
 

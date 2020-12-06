@@ -12,7 +12,7 @@ service EmployeeManager {
   rpc GetEmployees (common.EmptyRequest) returns (EmployeesResponse);
   rpc GetEmployee (common.IdRequest) returns (EmployeeResponse);
   rpc DeleteEmployee (common.IdRequest) returns (common.EmptyResponse);
-  rpc AddEmployee (EmployeeAddRequest) returns (common.EmptyResponse);
+  rpc AddEmployee (EmployeeAddRequest) returns (common.IdResponse);
   rpc UpdateEmployee (EmployeeUpdateRequest) returns (common.EmptyResponse);
 
 }
@@ -26,8 +26,10 @@ message EmployeeResponse {
 }
 
 message EmployeeAddRequest {
-    google.protobuf.Timestamp start_date = 2;
-    google.protobuf.Timestamp end_date = 3;
+    string first_name = 1;
+    string last_name = 2;
+    string email = 3;
+    google.protobuf.Timestamp joining = 4;
 }
 
 message EmployeeUpdateRequest {

@@ -48,7 +48,7 @@ namespace PulseApp.Services
 
             var employees = await db.Employees
                 .Where(e => e.Joining <= end)
-                .Select(EmployeeDto.Selector)
+                .Select(EmployeeDto.SelectorDto)
                 .ToArrayAsync();
 
             var attendances = await db.Attendances
@@ -69,7 +69,7 @@ namespace PulseApp.Services
 
             var employee = await db.Employees
                 .Where(e => e.Id == request.EmployeeId && e.Joining <= end)
-                .Select(EmployeeDto.Selector)
+                .Select(EmployeeDto.SelectorDto)
                 .SingleOrDefaultAsync();
 
             var response = new EmployeeAttendanceResponse();
