@@ -1,8 +1,9 @@
 ﻿@page "/employees"
 
-@using PulseApp.Data
+@using PulseApp.Protos
+
 @inject NavigationManager NavigationManager
-@inject EmployeeService EmployeeService
+@inject EmployeeManager.EmployeeManagerClient EmployeeService
 
 <h1>Employees</h1>
 
@@ -33,7 +34,7 @@ else
                     <td>@employee.FirstName</td>
                     <td>@employee.LastName</td>
                     <td>@employee.Email</td>
-                    <td>@employee.Joining.ToShortDateString()</td>
+                    <td>@employee.Joining.ToDateTime().ToShortDateString()</td>
                     <td>
                         <button type="button" @onclick="(() => OnEdit(employee.Id))">Edit</button>
                         <button type="button" @onclick="(() => OnDelete(employee.Id))">Delete</button>
@@ -46,8 +47,8 @@ else
 }
 
 @code {
-    private EmployeeDto[] _all;
-    private EmployeeDto[] employees;
+    private EmployeeProto[] _all;
+    private EmployeeProto[] employees;
 
     protected override async Task OnInitializedAsync()
     {
@@ -56,7 +57,9 @@ else
 
     private async Task GetAll()
     {
-        _all = await EmployeeService.GetEmployeesAsync();
+        var request = new EmptyRequest();
+        var response = await EmployeeService.GetEmployeesAsync(request);
+        _all = response.Employees.ToArray();
         employees = _all;
     }
 
@@ -75,7 +78,8 @@ else
 
     private async Task OnDelete(int id)
     {
-        await EmployeeService.DeleteAsync(id);
+        var request = new IdRequest() { Id = id };
+        await EmployeeService.DeleteEmployeeAsync(request);
         await GetAll();
     }
 

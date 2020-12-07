@@ -1,8 +1,10 @@
 ﻿@page "/employees/{id:int}"
 
-@using PulseApp.Data
+@using PulseApp.Protos
+@using Google.Protobuf.WellKnownTypes;
+
 @inject NavigationManager NavigationManager
-@inject EmployeeService EmployeeService
+@inject EmployeeManager.EmployeeManagerClient EmployeeService
 
 <h1>Employees</h1>
 
@@ -10,38 +12,40 @@
 
 @if (employee == null)
 {
-    <p><em>Loading...</em></p>
+<p><em>Loading...</em></p>
 }
 else
 {
-    <form>
-        <div class="form-row">
-            <div class="form-group col-md-6">
-                <label for="firstName">First Name</label>
-                <input @bind="employee.FirstName" type="text" class="form-control" id="firstName" placeholder="First Name">
-            </div>
-            <div class="form-group col-md-6">
-                <label for="lastName">Last Name</label>
-                <input @bind="employee.LastName" type="text" class="form-control" id="lastName" placeholder="Last Name">
-            </div>
+<form>
+    <div class="form-row">
+        <div class="form-group col-md-6">
+            <label for="firstName">First Name</label>
+            <input @bind="employee.FirstName" type="text" class="form-control" id="firstName" placeholder="First Name">
         </div>
-        <div class="form-row">
-            <div class="form-group col-md-6">
-                <label for="email">Email</label>
-                <input @bind="employee.Email" type="email" class="form-control" id="email" placeholder="Email">
-            </div>
-            <div class="form-group col-md-6">
-                <label for="joining">Joining</label>
-                <input type="text" class="form-control" id="joining" placeholder="Joining">
-            </div>
+        <div class="form-group col-md-6">
+            <label for="lastName">Last Name</label>
+            <input @bind="employee.LastName" type="text" class="form-control" id="lastName" placeholder="Last Name">
         </div>
-        <button type="button" @onclick="OnSave" class="btn btn-primary">Save</button>
-    </form>
+    </div>
+    <div class="form-row">
+        <div class="form-group col-md-6">
+            <label for="email">Email</label>
+            <input @bind="employee.Email" type="email" class="form-control" id="email" placeholder="Email">
+        </div>
+        <div class="form-group col-md-6">
+            <label for="joining">Joining</label>
+            <input @bind="joining" type="text" class="form-control" id="joining" placeholder="Joining">
+        </div>
+    </div>
+    <button type="button" @onclick="OnSave" class="btn btn-primary">Save</button>
+</form>
 }
 
 @code {
 
-    private EmployeeDto employee;
+    private EmployeeProto employee;
+
+    private DateTime joining;
 
     [Parameter]
     public int Id { get; set; }
@@ -55,11 +59,15 @@ else
     {
         if (Id > 0)
         {
-            employee = await EmployeeService.GetEmployeeAsync(Id);
+            var request = new IdRequest() { Id = Id };
+            var response = await EmployeeService.GetEmployeeAsync(request);
+            employee = response.Employee;
+            joining = employee.Joining.ToDateTime().ToLocalTime();
         }
         else
         {
-            employee = new EmployeeDto();
+            employee = new EmployeeProto();
+            joining = DateTime.Today;
         }
     }
 
@@ -67,12 +75,14 @@ else
     {
         if (Id > 0)
         {
-            await EmployeeService.UpdateAsync(Id, employee);
+            var request = new EmployeeUpdateRequest() { Id = Id, FirstName = employee.FirstName, LastName = employee.LastName, Email = employee.Email };
+            await EmployeeService.UpdateEmployeeAsync(request);
         }
         else
         {
-            Id = await EmployeeService.AddAsync(employee);
-            GoAtEmployee(Id);
+            var request = new EmployeeAddRequest() { FirstName = employee.FirstName, LastName = employee.LastName, Email = employee.Email, Joining = Timestamp.FromDateTime(joining.ToUniversalTime()) };
+            var response = await EmployeeService.AddEmployeeAsync(request);
+            GoAtEmployee(response.Id);
         }
     }
 

@@ -1,12 +1,14 @@
 ﻿@page "/leave-ledger"
 
-@using PulseApp.Data
+@using PulseApp.Protos
+@using PulseApp.Constants
 @using PulseApp.Helpers
+@using Google.Protobuf.WellKnownTypes
 
 @inject NavigationManager NavigationManager
-@inject EmployeeService EmployeeService
-@inject CalendarService CalendarService
-@inject LeaveService LeaveService
+@inject LeaveManager.LeaveManagerClient LeaveService
+@inject CalendarManager.CalendarManagerClient CalendarService
+@inject EmployeeManager.EmployeeManagerClient EmployeeService
 
 <h1>Employees</h1>
 
@@ -58,7 +60,7 @@ else
                     <td>Forwarded</td>
                     @foreach (var type in Ledger.LeaveTypes)
                     {
-                        <td class="text-center">@Ledger.Farward.GetValueOrNull(type.Id)</td>
+                        <td class="text-center">@Ledger.Forward.GetValueOrNull(type.Id)</td>
                     }
                 </tr>
                 <tr>
@@ -68,31 +70,16 @@ else
                         <td class="text-center">@Ledger.Opening.GetValueOrNull(type.Id)</td>
                     }
                 </tr>
-                @foreach (var (date, leave) in Ledger.Leaves)
+                @foreach (var proto in Ledger.Leaves.ToArray())
                 {
                     <tr>
-                        <td>@date.ToShortDateString()</td>
+                        <td>@proto.Date.ToDateTime().ToShortDateString()</td>
                         @foreach (var type in Ledger.LeaveTypes)
                         {
-                            <td class="text-center">@leave.GetValueOrNull(type.Id)</td>
+                            <td class="text-center">@proto.LeaveTypeCount.GetValueOrNull(type.Id)</td>
                         }
                     </tr>
                 }
-
-                @*@foreach (var leave in Leaves)
-                {
-                    <tr>
-                        <td>@leave.Date.ToShortDateString()</td>
-                        <td>@leave.LeaveType</td>
-                        <td>@leave.Count</td>
-                    </tr>
-                }
-                @if (Leaves == null || Leaves.Length == 0)
-                {
-                    <tr>
-                        <td colspan="3">No record found.</td>
-                    </tr>
-                }*@
             </tbody>
         </table>
     }
@@ -100,11 +87,11 @@ else
 
 @code {
 
-    private EmployeeDto[] EmployeeList { get; set; }
+    private EmployeeProto[] EmployeeList { get; set; }
 
-    private CalendarDto[] CalendarList { get; set; }
+    private CalendarProto[] CalendarList { get; set; }
 
-    private LeaveLedgerDto Ledger { get; set; }
+    private LeaveLedgerResponse Ledger { get; set; }
 
     private int EmployeeId { get; set; }
     private int CalendarId { get; set; }
@@ -114,7 +101,6 @@ else
 
     private bool ShowModal { get; set; }
 
-    private AttendanceDto Current { get; set; }
 
     protected override async Task OnInitializedAsync()
     {
@@ -127,12 +113,16 @@ else
 
     private async Task GetEmployees()
     {
-        EmployeeList = await EmployeeService.GetEmployeesAsync();
+        var request = new EmptyRequest();
+        var response = await EmployeeService.GetEmployeesAsync(request);
+        EmployeeList = response.Employees.ToArray();
     }
 
     private async Task GetCalendars()
     {
-        CalendarList = await CalendarService.GetCalendarsAsync();
+        var request = new EmptyRequest();
+        var response = await CalendarService.GetCalendarsAsync(request);
+        CalendarList = response.Calendars.ToArray();
     }
 
     private async Task OnChangeEmployee(ChangeEventArgs e)
@@ -155,7 +145,8 @@ else
         }
         else
         {
-            Ledger = await LeaveService.GetLeaveLedger(EmployeeId, CalendarId);
+            var request = new LeaveLedgerRequest() { CalendarId = CalendarId, EmployeeId = EmployeeId };
+            Ledger = await LeaveService.GetLeaveLedgerAsync(request);
         }
     }
 

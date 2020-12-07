@@ -1,6 +1,6 @@
-﻿@using PulseApp.Data
+﻿@using PulseApp.Protos
 
-@inject CalendarService CalendarService
+@inject CalendarManager.CalendarManagerClient CalendarService
 
 
     <div class="modal fade show" id="myModal" style="display:block" aria-modal="true" role="dialog">
@@ -39,7 +39,7 @@
 @code {
 
     [Parameter]
-    public CalendarDto Current { get; set; }
+    public CalendarProto Current { get; set; }
 
     [Parameter]
     public EventCallback<MouseEventArgs> OnCancelCallback { get; set; }

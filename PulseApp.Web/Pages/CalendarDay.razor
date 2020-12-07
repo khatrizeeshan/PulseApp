@@ -1,9 +1,10 @@
-﻿@using PulseApp.Data
-@using PulseApp.Constants
+﻿@using PulseApp.Constants
+@using PulseApp.Protos
 
-@inject CalendarService CalendarService
+@inject CalendarManager.CalendarManagerClient CalendarService
 
-@if(DayTypeList == null)
+
+@if (DayTypeList == null)
 {
     <p><em>Loading...</em></p>
 }
@@ -46,10 +47,10 @@ else
 
 @code {
 
-    private DayType[] DayTypeList { get; set; }
+    private DayTypeProto[] DayTypeList { get; set; }
 
     [Parameter]
-    public CalendarDayDto Current { get; set; }
+    public MarkDayRequest Current { get; set; }
 
     [Parameter]
     public EventCallback<MouseEventArgs> OnCancelCallback { get; set; }
@@ -68,7 +69,9 @@ else
 
     private async Task GetDayTypes()
     {
-        DayTypeList = await CalendarService.GetDayTypesAsync();
+        var request = new EmptyRequest();
+        var response = await CalendarService.GetDayTypesAsync(request);
+        DayTypeList = response.DayTypes.ToArray();
     }
 
     private void OnCancelModal()

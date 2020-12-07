@@ -1,12 +1,13 @@
 ﻿@page "/calendars/{id:int}"
 
-@using PulseApp.Data
+@using PulseApp.Protos
 @using PulseApp.Constants
 @using PulseApp.Helpers
+@using Google.Protobuf.WellKnownTypes
 
 @inject NavigationManager NavigationManager
-@inject CalendarService CalendarService
-@inject AttendanceService AttendanceService
+@inject AttendanceManager.AttendanceManagerClient AttendanceService
+@inject CalendarManager.CalendarManagerClient CalendarService
 
 <h1>Calendar</h1>
 
@@ -36,7 +37,7 @@ else
         <button @onclick="OnNext" type="button" class="btn btn-link">Next</button>
     </div>
 
-    if (CalendarDays.Length > 0)
+    if (CalendarDays.Months.Count > 0)
     {
         <table class="table table-bordered table-sm">
             <thead>
@@ -49,17 +50,17 @@ else
                 </tr>
             </thead>
             <tbody>
-                @foreach (var month in CalendarDays)
+                @foreach (var month in CalendarDays.Months)
                 {
                     <tr>
                         <td>@month.MonthName, @month.Year</td>
                         @for (int i = 1; i <= month.Days; i++)
                         {
                             var day = i;
-                            month.CalendarDays.TryGetValue(i, out CalendarDayDetailDto detail);
+                            month.CalendarDays.TryGetValue(i, out CalendarDayProto detail);
                             <td class="text-center p-0">
                                 <div style="height: 100%;">
-                                    <div style="cursor: pointer;" class="mt-auto @GetClass(detail, "main")"
+                                    <div style="cursor: pointer;" class="mt-auto @GetClass(detail, " main")"
                                          @onclick="() => OnShowDayModal(Id, day, month.Month, month.Year, detail?.DayTypeId, detail?.Comments)">
                                         <small>c</small>
                                     </div>
@@ -101,13 +102,13 @@ else
     [Parameter]
     public int Year { get; set; }
 
-    private CalendarDto[] CalendarList { get; set; }
+    private CalendarProto[] CalendarList { get; set; }
 
-    private CalendayDayMonthDto[] CalendarDays { get; set; }
+    private CalendarDaysResponse CalendarDays { get; set; }
 
     private string SelectedCalendarId { get; set; }
 
-    private CalendarDto SelectedCalendar { get; set; }
+    private CalendarProto SelectedCalendar { get; set; }
 
     private int SelectedCalendarIndex { get; set; }
 
@@ -115,9 +116,9 @@ else
 
     private bool ShowAddModal { get; set; }
 
-    private CalendarDayDto CurrentDay { get; set; }
+    private MarkDayRequest CurrentDay { get; set; }
 
-    private CalendarDto CurrentCalendar { get; set; }
+    private CalendarProto CurrentCalendar { get; set; }
 
     protected override async Task OnInitializedAsync()
     {
@@ -136,26 +137,30 @@ else
 
     private async Task Get()
     {
-        CalendarDays = await CalendarService.GetCalendarDaysAsync(Id);
+        var request = new IdRequest() { Id = Id };
+        CalendarDays = await CalendarService.GetCalendarDaysAsync(request);
     }
 
     private async Task GetCalendars()
     {
-        CalendarList = await CalendarService.GetCalendarsAsync();
+        var request = new EmptyRequest();
+        var response = await CalendarService.GetCalendarsAsync(request);
+        CalendarList = response.Calendars.ToArray();
     }
 
 
-    private async Task MarkDay(CalendarDayDto day)
+    private async Task MarkDay(MarkDayRequest request)
     {
-        await CalendarService.MarkDayAsync(day.CalendarId, day.Year, day.Month, day.Day, day.DayTypeId, day.Comments);
+        await CalendarService.MarkDayAsync(request);
         await Get();
     }
 
-    private async Task AddCalendar(CalendarDto calendar)
+    private async Task AddCalendar(CalendarProto calendar)
     {
-        var id = await CalendarService.AddAsync(calendar);
+        var reqeuest = new CalendarAddRequest() { StartDate = calendar.StartDate, EndDate = calendar.EndDate };
+        var response = await CalendarService.AddCalendarAsync(reqeuest);
         await GetCalendars();
-        await Go(id);
+        await Go(response.Id);
     }
 
     private async Task OnNext()
@@ -199,15 +204,15 @@ else
         var start = DateTimeHelper.FirstDay();
         if (CalendarList.Any())
         {
-            start = CalendarList.Max(c => c.EndDate).AddDays(1);
+            start = CalendarList.Max(c => c.EndDate).ToDateTime().AddDays(1);
         }
 
         var end = start.AddYears(1).AddDays(-1);
 
-        CurrentCalendar = new CalendarDto
+        CurrentCalendar = new CalendarProto
         {
-            StartDate = start,
-            EndDate = end
+            StartDate = Timestamp.FromDateTime(start),
+            EndDate = Timestamp.FromDateTime(end),
         };
 
         ShowAddModal = true;
@@ -227,7 +232,7 @@ else
 
     private void OnShowDayModal(int calendarId, int day, int month, int year, int? dayTypeId, string comments = null)
     {
-        CurrentDay = new CalendarDayDto
+        CurrentDay = new MarkDayRequest
         {
             CalendarId = calendarId,
             Day = day,
@@ -252,7 +257,7 @@ else
         ShowCalendarDayModal = false;
     }
 
-    private string GetClass(CalendarDayDetailDto detail, string position)
+    private string GetClass(CalendarDayProto detail, string position)
     {
         switch (position)
         {

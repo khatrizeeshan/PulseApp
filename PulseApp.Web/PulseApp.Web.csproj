@@ -4,16 +4,11 @@
     <TargetFramework>net5.0</TargetFramework>
     <AssemblyName>PulseApp</AssemblyName>
     <RootNamespace>PulseApp</RootNamespace>
+    <BlazorWebAssemblyEnableLinking>false</BlazorWebAssemblyEnableLinking>
   </PropertyGroup>
 
   <ItemGroup>
-    <Content Remove="Pages\Calendar.razor" />
-    <Content Remove="Pages\CalendarDay.razor" />
-    <Content Remove="Pages\CalendarYear.razor" />
     <Content Remove="Pages\Counter.razor" />
-    <Content Remove="Pages\Employee.razor" />
-    <Content Remove="Pages\Employees.razor" />
-    <Content Remove="Pages\LeaveLedger.razor" />
     <Content Remove="Pages\Settings.razor" />
   </ItemGroup>
 
