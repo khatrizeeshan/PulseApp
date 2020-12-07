@@ -2,7 +2,6 @@ syntax = "proto3";
 
 option csharp_namespace = "PulseApp.Protos";
 
-import "google/protobuf/timestamp.proto";
 import "Protos/common.proto";
 
 package leave;
@@ -35,7 +34,7 @@ message LeaveTypeProto {
 }
 
 message LeaveDateProto {
-    google.protobuf.Timestamp date = 1;
+    common.Date date = 1;
     map<int32, int32> leave_type_count = 2;
 }
 

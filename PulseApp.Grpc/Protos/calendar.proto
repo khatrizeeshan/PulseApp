@@ -2,7 +2,6 @@ syntax = "proto3";
 
 option csharp_namespace = "PulseApp.Protos";
 
-import "google/protobuf/timestamp.proto";
 import "Protos/common.proto";
 
 package calendar;
@@ -35,14 +34,14 @@ message CalendarResponse {
 }
 
 message CalendarAddRequest {
-    google.protobuf.Timestamp start_date = 2;
-    google.protobuf.Timestamp end_date = 3;
+    common.Date start_date = 2;
+    common.Date end_date = 3;
 }
 
 message CalendarUpdateRequest {
     int32 id = 1;
-    google.protobuf.Timestamp start_date = 2;
-    google.protobuf.Timestamp end_date = 3;
+    common.Date start_date = 2;
+    common.Date end_date = 3;
 }
 
 message CalendarDaysResponse {
@@ -64,8 +63,8 @@ message MarkDayRequest {
 
 message CalendarProto {
     int32 id = 1;
-    google.protobuf.Timestamp start_date = 2;
-    google.protobuf.Timestamp end_date = 3;
+    common.Date start_date = 2;
+    common.Date end_date = 3;
 }
 
 message DayTypeProto {
@@ -87,7 +86,3 @@ message CalendarDayProto {
     string day_type_code = 2;
     string comments = 3;
 }
-
-
-
-

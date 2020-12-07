@@ -3,7 +3,6 @@
 @using PulseApp.Protos
 @using PulseApp.Constants
 @using PulseApp.Helpers
-@using Google.Protobuf.WellKnownTypes
 
 @inject NavigationManager NavigationManager
 @inject AttendanceManager.AttendanceManagerClient AttendanceService
@@ -60,7 +59,7 @@ else
                             month.CalendarDays.TryGetValue(i, out CalendarDayProto detail);
                             <td class="text-center p-0">
                                 <div style="height: 100%;">
-                                    <div style="cursor: pointer;" class="mt-auto @GetClass(detail, " main")"
+                                    <div style="cursor: pointer;" class="mt-auto @GetClass(detail, "main")"
                                          @onclick="() => OnShowDayModal(Id, day, month.Month, month.Year, detail?.DayTypeId, detail?.Comments)">
                                         <small>c</small>
                                     </div>
@@ -204,15 +203,15 @@ else
         var start = DateTimeHelper.FirstDay();
         if (CalendarList.Any())
         {
-            start = CalendarList.Max(c => c.EndDate).ToDateTime().AddDays(1);
+            start = CalendarList.Max(c => c.EndDate.ToDateTime()).AddDays(1);
         }
 
         var end = start.AddYears(1).AddDays(-1);
 
         CurrentCalendar = new CalendarProto
         {
-            StartDate = Timestamp.FromDateTime(start),
-            EndDate = Timestamp.FromDateTime(end),
+            StartDate = start.ToDate(),
+            EndDate = end.ToDate(),
         };
 
         ShowAddModal = true;
@@ -230,7 +229,7 @@ else
         ShowAddModal = false;
     }
 
-    private void OnShowDayModal(int calendarId, int day, int month, int year, int? dayTypeId, string comments = null)
+    private void OnShowDayModal(int calendarId, int day, int month, int year, int? dayTypeId = null, string comments = null)
     {
         CurrentDay = new MarkDayRequest
         {
@@ -239,7 +238,7 @@ else
             Month = month,
             Year = year,
             DayTypeId = dayTypeId.GetValueOrDefault(DayTypes.Holiday),
-            Comments = comments,
+            Comments = comments != null ? comments : string.Empty,
         };
 
         ShowCalendarDayModal = true;

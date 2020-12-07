@@ -4,13 +4,11 @@ using PulseApp.Data;
 using PulseApp.Helpers;
 using PulseApp.Models;
 using System;
-using System.Collections.Generic;
 using System.Linq;
 using System.Linq.Expressions;
 using System.Threading.Tasks;
 using PulseApp.Protos;
 using Grpc.Core;
-using Google.Protobuf.WellKnownTypes;
 
 namespace PulseApp.Services
 {
@@ -155,6 +153,7 @@ namespace PulseApp.Services
             else
             {
                 calendarDay.DayTypeId = request.DayTypeId;
+                calendarDay.Comments = request.Comments;
                 db.CalendarDays.Update(calendarDay);
             }
 
@@ -191,7 +190,7 @@ namespace PulseApp.Services
         {
             var response = new DatesResponse();
             var offDates = await GetOffDates(request.StartDate.ToDateTime(), request.EndDate.ToDateTime());
-            response.Dates.Add(offDates.Select(d => Timestamp.FromDateTime(d)));
+            response.Dates.Add(offDates.Select(d => d.ToDate()));
             return response;
         }
 
@@ -234,8 +233,8 @@ namespace PulseApp.Services
         public static Expression<Func<Calendar, CalendarProto>> Selector = e => new CalendarProto
         {
             Id = e.Id,
-            StartDate = Timestamp.FromDateTime(e.StartDate),
-            EndDate = Timestamp.FromDateTime(e.EndDate),
+            StartDate = e.StartDate.ToDate(),
+            EndDate = e.EndDate.ToDate(),
         };
     }
 
@@ -285,32 +284,35 @@ namespace PulseApp.Services
             var date = start;
             while (date <= end)
             {
-                var month = date.Month;
-                var year = date.Year;
-                var firstDay = DateTimeHelper.FirstDay(year, month);
-                var proto = new CalendarMonthProto()
+                var firstDay = DateTimeHelper.FirstDay(date.Year, date.Month);
+                var month = new CalendarMonthProto()
                 {
-                    Month = month,
-                    MonthName = DateTimeHelper.GetMonthName(month),
-                    Year = year,
-                    Days = DateTime.DaysInMonth(year, month),
+                    Month = date.Month,
+                    MonthName = DateTimeHelper.GetMonthName(date.Month),
+                    Year = date.Year,
+                    Days = DateTime.DaysInMonth(date.Year, date.Month),
                 };
 
                 for (int i = 0; i <= 31; i++)
                 {
-                    var day = days.FirstOrDefault(a => a.Month == month && a.Day == i);
+                    var day = days.FirstOrDefault(a => a.Month == date.Month && a.Day == i);
                     if (day != null)
                     {
-                        proto.CalendarDays.Add(i, new CalendarDayProto()
+                        var proto = new CalendarDayProto()
                         {
                             DayTypeId = day.DayTypeId,
                             DayTypeCode = day.DayTypeCode,
-                            Comments = day.Comments
-                        });
+                        };
+
+                        if(day.Comments != null) {
+                            proto.Comments = day.Comments;
+                        }
+
+                        month.CalendarDays.Add(i, proto);
                     }
                 }
 
-                response.Months.Add(proto);
+                response.Months.Add(month);
                 date = date.AddMonths(1);
             }
         }

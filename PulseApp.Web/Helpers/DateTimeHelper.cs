@@ -63,6 +63,16 @@ namespace PulseApp.Helpers
             return offDays.Where(d => d.Year == year && d.Month == month).Select(d => d.Day).ToArray();
         }
 
+        public static Date ToDate(this DateTime date)
+        {
+            return new Date() { Year = date.Year, Month = date.Month, Day = date.Day };
+        }
+
+        public static DateTime ToDateTime(this Date date)
+        {
+            return new DateTime(date.Year, date.Month, date.Day);
+        }
+
         public static string ToRangeString(this CalendarProto proto)
         {
             return $"{proto.StartDate.ToDateTime().ToShortDateString()} - {proto.EndDate.ToDateTime().ToShortDateString()}";

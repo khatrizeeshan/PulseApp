@@ -1,4 +1,3 @@
-using Google.Protobuf.WellKnownTypes;
 using Grpc.Core;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
@@ -7,7 +6,6 @@ using PulseApp.Helpers;
 using PulseApp.Models;
 using PulseApp.Protos;
 using System;
-using System.Collections.Generic;
 using System.Linq;
 using System.Linq.Expressions;
 using System.Threading.Tasks;
@@ -127,7 +125,7 @@ namespace PulseApp.Services
             FirstName = e.FirstName,
             LastName = e.LastName,
             Email = e.Email,
-            Joining = Timestamp.FromDateTime(e.Joining),
+            Joining = e.Joining.ToDate(),
         };
     }
 

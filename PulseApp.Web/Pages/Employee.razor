@@ -1,7 +1,7 @@
 ﻿@page "/employees/{id:int}"
 
 @using PulseApp.Protos
-@using Google.Protobuf.WellKnownTypes;
+@using PulseApp.Helpers
 
 @inject NavigationManager NavigationManager
 @inject EmployeeManager.EmployeeManagerClient EmployeeService
@@ -62,7 +62,7 @@ else
             var request = new IdRequest() { Id = Id };
             var response = await EmployeeService.GetEmployeeAsync(request);
             employee = response.Employee;
-            joining = employee.Joining.ToDateTime().ToLocalTime();
+            joining = employee.Joining.ToDateTime();
         }
         else
         {
@@ -80,7 +80,7 @@ else
         }
         else
         {
-            var request = new EmployeeAddRequest() { FirstName = employee.FirstName, LastName = employee.LastName, Email = employee.Email, Joining = Timestamp.FromDateTime(joining.ToUniversalTime()) };
+            var request = new EmployeeAddRequest() { FirstName = employee.FirstName, LastName = employee.LastName, Email = employee.Email, Joining = joining.ToDate() };
             var response = await EmployeeService.AddEmployeeAsync(request);
             GoAtEmployee(response.Id);
         }

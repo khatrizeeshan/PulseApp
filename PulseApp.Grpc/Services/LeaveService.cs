@@ -2,13 +2,13 @@ using Microsoft.EntityFrameworkCore;
 using PulseApp.Data;
 using PulseApp.Models;
 using System;
-using System.Collections.Generic;
 using System.Linq;
 using System.Linq.Expressions;
 using System.Threading.Tasks;
 using PulseApp.Protos;
+using PulseApp.Helpers;
 using Grpc.Core;
-using Google.Protobuf.WellKnownTypes;
+
 
 namespace PulseApp.Services
 {
@@ -53,7 +53,7 @@ namespace PulseApp.Services
             foreach (var leave in leaves.Where(l => !l.Opening && !l.Forwarded).OrderBy(l => l.Date))
             {
                 var item = new LeaveDateProto();
-                item.Date = Timestamp.FromDateTime(leave.Date);
+                item.Date = leave.Date.ToDate();
                 item.LeaveTypeCount.Add(leave.LeaveTypeId, leave.Count);
 
                 response.Leaves.Add(item);

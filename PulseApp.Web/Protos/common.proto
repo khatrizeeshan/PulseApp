@@ -2,9 +2,13 @@ syntax = "proto3";
 
 option csharp_namespace = "PulseApp.Protos";
 
-import "google/protobuf/timestamp.proto";
-
 package common;
+
+message Date {
+	int32 year = 1;
+	int32 month =  2;
+	int32 day = 3;
+}
 
 message EmptyRequest {
 
@@ -28,12 +32,12 @@ message YearMonthRequest {
 }
 
 message DateRangeRequest {
-    google.protobuf.Timestamp start_date = 1;
-    google.protobuf.Timestamp end_date = 2;
+    Date start_date = 1;
+    Date end_date = 2;
 }
 
 message DateRequest {
-	google.protobuf.Timestamp date = 1;
+	Date date = 1;
 }
 
 message DaysResponse {
@@ -41,5 +45,5 @@ message DaysResponse {
 }
 
 message DatesResponse {
-    repeated google.protobuf.Timestamp dates = 1;
+    repeated Date dates = 1;
 }

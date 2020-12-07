@@ -2,7 +2,6 @@ syntax = "proto3";
 
 option csharp_namespace = "PulseApp.Protos";
 
-import "google/protobuf/timestamp.proto";
 import "Protos/common.proto";
 
 package employee;
@@ -29,7 +28,7 @@ message EmployeeAddRequest {
     string first_name = 1;
     string last_name = 2;
     string email = 3;
-    google.protobuf.Timestamp joining = 4;
+    common.Date joining = 4;
 }
 
 message EmployeeUpdateRequest {
@@ -44,7 +43,7 @@ message EmployeeProto {
     string first_name = 2;
     string last_name = 3;
     string email = 4;
-    google.protobuf.Timestamp joining = 5;
+    common.Date joining = 5;
 }
 
 

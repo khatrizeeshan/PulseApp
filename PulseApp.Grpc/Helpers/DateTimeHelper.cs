@@ -1,4 +1,5 @@
-﻿using System;
+﻿using PulseApp.Protos;
+using System;
 using System.Linq;
 
 namespace PulseApp.Helpers
@@ -60,6 +61,16 @@ namespace PulseApp.Helpers
         public static int[] OffDaysOfMonth(DateTime[] offDays, int year, int month)
         {
             return offDays.Where(d => d.Year == year && d.Month == month).Select(d => d.Day).ToArray();
+        }
+
+        public static Date ToDate(this DateTime date)
+        {
+            return new Date() { Year = date.Year, Month = date.Month, Day = date.Day };
+        }
+
+        public static DateTime ToDateTime(this Date date)
+        {
+            return new DateTime(date.Year, date.Month, date.Day);
         }
 
     }
