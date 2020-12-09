@@ -26,6 +26,7 @@ namespace PulseApp
         public void ConfigureServices(IServiceCollection services)
         {
             services.AddGrpc();
+            services.AddGrpcReflection();
 
             services.AddCors(o => o.AddPolicy("AllowAll", builder =>
             {
@@ -55,7 +56,12 @@ namespace PulseApp
 
             app.UseEndpoints(endpoints =>
             {
-                endpoints.Map();
+                endpoints.MapGrpcServices();
+
+                if(env.IsDevelopment())
+                {
+                    endpoints.MapGrpcReflectionService();
+                }
 
                 endpoints.MapGet("/", async context =>
                 {

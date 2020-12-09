@@ -6,7 +6,7 @@ namespace PulseApp.Helpers
 {
     public static class EndpointHelper
     {
-        public static void Map(this IEndpointRouteBuilder endpoints)
+        public static void MapGrpcServices(this IEndpointRouteBuilder endpoints)
         {
             endpoints.MapGrpcService<AttendanceService>().RequireCors("AllowAll");
             endpoints.MapGrpcService<CalendarService>().RequireCors("AllowAll");
