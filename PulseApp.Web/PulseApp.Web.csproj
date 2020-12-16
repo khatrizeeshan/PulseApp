@@ -27,11 +27,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <Protobuf Include="Protos\employee.proto" GrpcServices="Client" />
-    <Protobuf Include="Protos\common.proto" GrpcServices="Client" />
-    <Protobuf Include="Protos\attendance.proto" GrpcServices="Client" />
-    <Protobuf Include="Protos\calendar.proto" GrpcServices="Client" />
-    <Protobuf Include="Protos\leave.proto" GrpcServices="Client" />
+    <ProjectReference Include="..\PulseApp.Proto\PulseApp.Protos.csproj" />
   </ItemGroup>
 
 </Project>

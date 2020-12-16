@@ -6,14 +6,6 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <Protobuf Include="Protos\employee.proto" GrpcServices="Server" />
-    <Protobuf Include="Protos\common.proto" GrpcServices="Server" />
-    <Protobuf Include="Protos\attendance.proto" GrpcServices="Server" />
-    <Protobuf Include="Protos\calendar.proto" GrpcServices="Server" />
-    <Protobuf Include="Protos\leave.proto" GrpcServices="Server" />
-  </ItemGroup>
-
-  <ItemGroup>
     <PackageReference Include="Grpc.AspNetCore" Version="2.33.1" />
     <PackageReference Include="Grpc.AspNetCore.Server.Reflection" Version="2.33.1" />
     <PackageReference Include="Grpc.AspNetCore.Web" Version="2.33.1" />
@@ -23,6 +15,10 @@
 
   <ItemGroup>
     <Folder Include="wwwroot\" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\PulseApp.Proto\PulseApp.Protos.csproj" />
   </ItemGroup>
 
 </Project>

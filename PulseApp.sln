@@ -9,7 +9,9 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "PulseApp.Grpc", "PulseApp.G
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "PulseApp.Client", "PulseApp.Client\PulseApp.Client.csproj", "{E9E93EB7-BE57-43FA-AE64-8EC03F7939EA}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "PulseApp.Web", "PulseApp.Web\PulseApp.Web.csproj", "{688A6911-5AD1-4158-8A4C-A7B716746C60}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "PulseApp.Web", "PulseApp.Web\PulseApp.Web.csproj", "{688A6911-5AD1-4158-8A4C-A7B716746C60}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "PulseApp.Protos", "PulseApp.Proto\PulseApp.Protos.csproj", "{F350B83C-B5D2-4924-9208-33E95076664D}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -33,6 +35,10 @@ Global
 		{688A6911-5AD1-4158-8A4C-A7B716746C60}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{688A6911-5AD1-4158-8A4C-A7B716746C60}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{688A6911-5AD1-4158-8A4C-A7B716746C60}.Release|Any CPU.Build.0 = Release|Any CPU
+		{F350B83C-B5D2-4924-9208-33E95076664D}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{F350B83C-B5D2-4924-9208-33E95076664D}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{F350B83C-B5D2-4924-9208-33E95076664D}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{F350B83C-B5D2-4924-9208-33E95076664D}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
