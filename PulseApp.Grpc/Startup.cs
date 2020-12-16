@@ -26,14 +26,15 @@ namespace PulseApp
         public void ConfigureServices(IServiceCollection services)
         {
             services.AddGrpc();
+
             services.AddGrpcReflection();
 
             services.AddCors(o => o.AddPolicy("AllowAll", builder =>
             {
                 builder.AllowAnyOrigin()
-                       .AllowAnyMethod()
-                       .AllowAnyHeader()
-                       .WithExposedHeaders("Grpc-Status", "Grpc-Message", "Grpc-Encoding", "Grpc-Accept-Encoding");
+                        .AllowAnyMethod()
+                        .AllowAnyHeader()
+                        .WithExposedHeaders("Grpc-Status", "Grpc-Message", "Grpc-Encoding", "Grpc-Accept-Encoding");
             }));
 
             services.AddApplicationDbContext(Configuration);
@@ -49,10 +50,15 @@ namespace PulseApp
                 app.UseDeveloperExceptionPage();
             }
 
+            app.UseDefaultFiles();
+            app.UseStaticFiles();
             app.UseRouting();
 
             app.UseGrpcWeb(new GrpcWebOptions { DefaultEnabled = true });
-            app.UseCors();
+
+            if (env.IsDevelopment()) { 
+                app.UseCors();
+            }
 
             app.UseEndpoints(endpoints =>
             {
