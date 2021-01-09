@@ -26,6 +26,16 @@ message IdResponse {
 	int32 id = 1;
 }
 
+message IdDateRequest {
+	int32 id = 1;
+	Date date = 2;
+}
+
+message IdDateResponse {
+	int32 id = 1;
+	Date date = 2;
+}
+
 message YearMonthRequest {
 	int32 year = 1;
 	int32 month = 2;

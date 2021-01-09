@@ -10,15 +10,17 @@ namespace PulseApp.Helpers
 {
     public static class CalendarHelper
     {
-        public static CalendarDay[] MakeWeekends(this Calendar calendar, string weekends)
+        public static CalendarDay[] MakeWeekends(this Calendar calendar, int year, int month)
         {
             var days = new List<CalendarDay>();
-            var date = calendar.StartDate;
 
-            var array = weekends.ToCharArray();
+            var (start, end) = DateTimeHelper.YearRange(year, month);
+            var date = start;
+
+            var array = calendar.Weekends.ToCharArray();
             var on = '1';
 
-            while (date <= calendar.EndDate)
+            while (date <= end)
             {
                 if (array[(int)date.DayOfWeek] == on)
                 {

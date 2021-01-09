@@ -15,7 +15,7 @@ service CalendarManager {
   rpc UpdateCalendar (CalendarUpdateRequest) returns (common.EmptyResponse);
 
   rpc GetDayTypes (common.EmptyRequest) returns (DayTypesResponse);
-  rpc GetCalendarDays (common.IdRequest) returns (CalendarDaysResponse);
+  rpc GetCalendarDays (common.IdDateRequest) returns (CalendarDaysResponse);
   rpc MarkDay (MarkDayRequest) returns (common.EmptyResponse);
 
   rpc GetOffDays (common.YearMonthRequest) returns (common.DaysResponse);
@@ -34,14 +34,15 @@ message CalendarResponse {
 }
 
 message CalendarAddRequest {
+    string name = 1;
     common.Date start_date = 2;
-    common.Date end_date = 3;
+    string weekends = 3;
 }
 
 message CalendarUpdateRequest {
     int32 id = 1;
-    common.Date start_date = 2;
-    common.Date end_date = 3;
+    string name = 2;
+    string weekends = 3;
 }
 
 message CalendarDaysResponse {
@@ -63,8 +64,7 @@ message MarkDayRequest {
 
 message CalendarProto {
     int32 id = 1;
-    common.Date start_date = 2;
-    common.Date end_date = 3;
+    string name = 2;
 }
 
 message DayTypeProto {

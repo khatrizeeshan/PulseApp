@@ -52,8 +52,13 @@ namespace PulseApp.Helpers
 
         public static Tuple<DateTime, DateTime> YearRange(int year)
         {
-            var end = new DateTime(year, 12, 31);
-            var start = new DateTime(year, 1, 1);
+            return YearRange(year, 1);
+        }
+
+        public static Tuple<DateTime, DateTime> YearRange(int year, int month)
+        {
+            var start = new DateTime(year, month, 1);
+            var end = start.AddYears(1).AddDays(-1);
 
             return new Tuple<DateTime, DateTime>(start, end);
         }

@@ -49,7 +49,6 @@ namespace PulseApp.Services
             response.Calendar = calendar;
 
             return response;
-
         }
 
         public override async Task<EmptyResponse> DeleteCalendar(IdRequest request, ServerCallContext context)
@@ -65,8 +64,8 @@ namespace PulseApp.Services
         {
             using var db = DbFactory.CreateDbContext();
             var existing = await db.Calendars.SingleOrDefaultAsync(e => e.Id == request.Id);
-            existing.StartDate = request.StartDate.ToDateTime();
-            existing.EndDate = request.EndDate.ToDateTime();
+            existing.Name = request.Name;
+            existing.Weekends = request.Weekends; 
             db.Calendars.Update(existing);
             await db.SaveChangesAsync();
 
@@ -80,12 +79,13 @@ namespace PulseApp.Services
 
             var calendar = new Calendar
             {
+                Name = request.Name,
                 StartDate = request.StartDate.ToDateTime(),
-                EndDate = request.EndDate.ToDateTime()
+                Weekends = request.Weekends,
             };
             db.SetId(calendar);
 
-            var calendarDays = calendar.MakeWeekends(settings.Weekends);
+            var calendarDays = calendar.MakeWeekends(calendar.StartDate.Year, calendar.StartDate.Month);
             db.SetId(calendarDays);
 
             await db.Calendars.AddAsync(calendar);
@@ -109,7 +109,7 @@ namespace PulseApp.Services
             return response;
         }
 
-        public override async Task<CalendarDaysResponse> GetCalendarDays(IdRequest request, ServerCallContext context)
+        public override async Task<CalendarDaysResponse> GetCalendarDays(IdDateRequest request, ServerCallContext context)
         {
             using var db = DbFactory.CreateDbContext();
 
@@ -127,7 +127,9 @@ namespace PulseApp.Services
                     .Select(CalendarDayDto.Selector)
                     .ToArrayAsync();
 
-            response.Fill(calendarDays, calendar.StartDate, calendar.EndDate);
+            var (start, end) = DateTimeHelper.YearRange(request.Date.Year, request.Date.Month);
+
+            response.Fill(calendarDays, start, end);
             return response;
         }
 
@@ -194,37 +196,37 @@ namespace PulseApp.Services
             return response;
         }
 
-        public override async Task<IdResponse> GetCalendarId(DateRequest request, ServerCallContext context)
-        {
-            return new IdResponse() { Id = await GetCalendarId(request.Date.ToDateTime()) };
-        }
+        //public override async Task<IdResponse> GetCalendarId(DateRequest request, ServerCallContext context)
+        //{
+        //    return new IdResponse() { Id = await GetCalendarId(request.Date.ToDateTime()) };
+        //}
 
-        internal async Task<int> GetCalendarId(DateTime date)
-        {
-            using var db = DbFactory.CreateDbContext();
-            var calendarId = await db.Calendars
-                    .Where(a => date >= a.StartDate && date <= a.EndDate)
-                    .Select(c => c.Id)
-                    .SingleOrDefaultAsync();
+        //internal async Task<int> GetCalendarId(DateTime date)
+        //{
+        //    using var db = DbFactory.CreateDbContext();
+        //    var calendarId = await db.Calendars
+        //            .Where(a => date >= a.StartDate && date <= a.EndDate)
+        //            .Select(c => c.Id)
+        //            .SingleOrDefaultAsync();
 
-            if (calendarId == 0)
-            {
-                throw new Exception("No calendar found for selected date.");
-            }
+        //    if (calendarId == 0)
+        //    {
+        //        throw new Exception("No calendar found for selected date.");
+        //    }
 
-            return calendarId;
-        }
+        //    return calendarId;
+        //}
 
-        public override async Task<IdResponse> GetLastCalendarId(EmptyRequest request, ServerCallContext context)
-        {
-            using var db = DbFactory.CreateDbContext();
-            var calendarId = await db.Calendars
-                                .OrderByDescending(c => c.StartDate)
-                                .Select(c => c.Id)
-                                .FirstOrDefaultAsync();
+        //public override async Task<IdResponse> GetLastCalendarId(EmptyRequest request, ServerCallContext context)
+        //{
+        //    using var db = DbFactory.CreateDbContext();
+        //    var calendarId = await db.Calendars
+        //                        .OrderByDescending(c => c.StartDate)
+        //                        .Select(c => c.Id)
+        //                        .FirstOrDefaultAsync();
 
-            return new IdResponse() { Id = calendarId };
-        }
+        //    return new IdResponse() { Id = calendarId };
+        //}
 
     }
 
@@ -233,8 +235,7 @@ namespace PulseApp.Services
         public static Expression<Func<Calendar, CalendarProto>> Selector = e => new CalendarProto
         {
             Id = e.Id,
-            StartDate = e.StartDate.ToDate(),
-            EndDate = e.EndDate.ToDate(),
+            Name = e.Name,
         };
     }
 

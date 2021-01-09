@@ -34,7 +34,8 @@ else
         </div>
         <div class="form-group col-md-6">
             <label for="joining">Joining</label>
-            <input @bind="joining" type="text" class="form-control" id="joining" placeholder="Joining">
+            <DateEdit TValue="DateTime" @bind-Date="@joining" />
+            @*<input @bind="joining" type="text" class="form-control" id="joining" placeholder="Joining">*@
         </div>
     </div>
     <button type="button" @onclick="OnSave" class="btn btn-primary">Save</button>
@@ -75,7 +76,7 @@ else
     {
         if (Id > 0)
         {
-            var request = new EmployeeUpdateRequest() { Id = Id, FirstName = employee.FirstName, LastName = employee.LastName, Email = employee.Email };
+            var request = new EmployeeUpdateRequest() { Id = Id, FirstName = employee.FirstName, LastName = employee.LastName, Email = employee.Email, Joining = joining.ToDate() };
             await EmployeeService.UpdateEmployeeAsync(request);
         }
         else

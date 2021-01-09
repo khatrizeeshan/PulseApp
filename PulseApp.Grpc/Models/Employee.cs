@@ -17,6 +17,26 @@ namespace PulseApp.Models
         public ICollection<Attendance> Attendances { get; set; }
     }
 
+    public class EmployeeCalendar : BaseModel<int>
+    {
+        public int EmployeeId { get; set; }
+        public Employee Employee { get; set; }
+        public int CalendarId { get; set; }
+        public Calendar Calendar { get; set; }
+        public DateTime StartDate { get; set; }
+    }
+
+    public class EmployeeLeavePolicy : BaseModel<int>
+    {
+        public int EmployeeId { get; set; }
+        public Employee Employee { get; set; }
+        public int LeavePolicyId { get; set; }
+        public LeavePolicy LeavePolicy { get; set; }
+        public DateTime StartDate { get; set; }
+    }
+
     public class EmployeeConfiguration : BaseEntityTypeConfiguration<Employee> { }
+    public class EmployeeCalendarConfiguration : BaseEntityTypeConfiguration<EmployeeCalendar> { }
+    public class EmployeeLeavePolicyConfiguration : BaseEntityTypeConfiguration<EmployeeLeavePolicy> { }
 
 }

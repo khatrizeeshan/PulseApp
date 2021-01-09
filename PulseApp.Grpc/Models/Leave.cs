@@ -3,23 +3,26 @@ using System.Collections.Generic;
 
 namespace PulseApp.Models
 {
+    public class LeavePolicyType : BaseModel<int>
+    {
+        public string Code { get; set; }
+        public string Name { get; set; }
+    }
+
     public class LeavePolicy : BaseModel<int>
     {
         public string Name { get; set; }
-
+        public int LeavePolicyTypeId { get; set; }
+        public LeavePolicyType LeavePolicyType { get; set; }
         public ICollection<LeavePolicyDetail> Details { get; set; }
     }
 
     public class LeavePolicyDetail : BaseModel<int>
     {
         public int LeavePolicyId { get; set; }
-
         public LeavePolicy LeavePolicy { get; set; }
-
         public int LeaveTypeId { get; set; }
-
         public LeaveType LeaveType { get; set; }
-
         public int Count { get; set; }
     }
 

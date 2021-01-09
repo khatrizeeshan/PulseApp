@@ -64,6 +64,7 @@ namespace PulseApp.Services
             existing.FirstName = request.FirstName;
             existing.LastName = request.LastName;
             existing.Email = request.Email;
+            existing.Joining = request.Joining.ToDateTime();
             db.Employees.Update(existing);
             await db.SaveChangesAsync();
 
@@ -85,20 +86,20 @@ namespace PulseApp.Services
             return new IdResponse { Id = employee.Id };
         }
 
-        internal async Task<int> GetCalendarIdAsync(int employeeId, DateTime date)
-        {
-            using var db = DbFactory.CreateDbContext();
-            var employee = await db.Employees.Where(e => e.Id == employeeId)
-                                        .Select(EmployeeJoiningDto.Selector)
-                                        .SingleOrDefaultAsync();
+        //internal async Task<int> GetCalendarIdAsync(int employeeId, DateTime date)
+        //{
+        //    using var db = DbFactory.CreateDbContext();
+        //    var employee = await db.Employees.Where(e => e.Id == employeeId)
+        //                                .Select(EmployeeJoiningDto.Selector)
+        //                                .SingleOrDefaultAsync();
 
-            if (date < employee.Joining) {
-                throw new Exception("No calendar found for selected employee.");
-            }
+        //    if (date < employee.Joining) {
+        //        throw new Exception("No calendar found for selected employee.");
+        //    }
 
-            var service = Provider.GetRequiredService<CalendarService>();
-            return await service.GetCalendarId(date);
-        }
+        //    var service = Provider.GetRequiredService<CalendarService>();
+        //    return await service.GetCalendarId(date);
+        //}
 
     }
 
@@ -116,7 +117,7 @@ namespace PulseApp.Services
             FirstName = e.FirstName,
             LastName = e.LastName,
             Email = e.Email,
-            Joining = e.Joining
+            Joining = e.Joining,
         };
 
         public static Expression<Func<Employee, EmployeeProto>> Selector = e => new EmployeeProto

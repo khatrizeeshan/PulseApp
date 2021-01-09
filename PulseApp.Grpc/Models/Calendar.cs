@@ -4,8 +4,9 @@ namespace PulseApp.Models
 {
     public class Calendar : BaseModel<int>
     {
+        public string Name { get; set; }
+        public string Weekends { get; set; }
         public DateTime StartDate { get; set; }
-        public DateTime EndDate { get; set; }
     }
 
     public class CalendarDay : BaseModel<int>
@@ -23,6 +24,8 @@ namespace PulseApp.Models
         public string Code { get; set; }
         public string Name { get; set; }
     }
+
+    public class CalendarTypeConfiguration : BaseEntityTypeConfiguration<LeavePolicyType> { }
 
     public class CalendarConfiguration : BaseEntityTypeConfiguration<Calendar> { }
 

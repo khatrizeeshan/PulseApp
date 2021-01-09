@@ -315,7 +315,7 @@ namespace PulseApp.Services
 
             if (dto.LeaveTypeId.HasValue)
             {
-                proto.LeaveTypeId = dto.LeaveTypeId.GetValueOrDefault(0);
+                proto.LeaveTypeId = dto.LeaveTypeId.Value;
                 proto.LeaveTypeCode = dto.LeaveTypeCode;
             }
 

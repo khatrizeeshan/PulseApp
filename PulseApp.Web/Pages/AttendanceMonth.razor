@@ -182,7 +182,7 @@ else
         await LoadCurrentMonth();
     }
 
-    private void OnShowModal(int employeeId, int day, int? attendanceTypeId, int? leaveTypeId = null, string comments = "")
+    private void OnShowModal(int employeeId, int day, int? attendanceTypeId, int? leaveTypeId = null, string comments = null)
     {
         Current = new MarkAttendanceRequest
         {
@@ -192,7 +192,7 @@ else
             Year = Year,
             AttendanceTypeId = attendanceTypeId.GetValueOrDefault(Constants.AttendanceTypes.Full),
             LeaveTypeId = leaveTypeId.GetValueOrDefault(Constants.LeaveTypes.Casual),
-            Comments = comments,
+            Comments = comments != null ? comments : string.Empty,
         };
 
         ShowModal = true;

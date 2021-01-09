@@ -10,42 +10,48 @@ namespace PulseApp.Data
 {
     public class Seeding
     {
-        private static readonly Setting Setting = new Setting() { Id = 0, Weekends = "1000000" };
-
         private static readonly DayType[] DayTypeList = new DayType[]
         {
             new DayType() { Id = DayTypes.Weekend, Code = "W", Name = "Weekend" },
             new DayType() { Id = DayTypes.Holiday, Code = "H", Name = "Holiday" },
         };
 
+        private static readonly LeavePolicyType[] CalendarTypeList = new LeavePolicyType[]
+        {
+            new LeavePolicyType() { Id = LeavePolicyTypes.Yearly, Code = "Y", Name = "Yearly" },
+            new LeavePolicyType() { Id = LeavePolicyTypes.Monthly, Code = "M", Name = "Monthly" },
+            new LeavePolicyType() { Id = LeavePolicyTypes.Weekly, Code = "W", Name = "Weekly" },
+            new LeavePolicyType() { Id = LeavePolicyTypes.Quarterly, Code = "Q", Name = "Quarterly" },
+            new LeavePolicyType() { Id = LeavePolicyTypes.HalfYearly, Code = "H", Name = "HalfYearly" },
+        };
+
         private static readonly Calendar[] CalendarList = new Calendar[]
         {
-            new Calendar() { StartDate = new DateTime(2019, 7, 1), EndDate = new DateTime(2020, 6, 30) },
-            new Calendar() { StartDate = new DateTime(2020, 7, 1), EndDate = new DateTime(2021, 6, 30) },
+            new Calendar() { Name = "Saturday, Sunday Calendar", Weekends = "1000000", StartDate = new DateTime(2019, 7, 1) },
         };
 
         private static readonly LeavePolicy[] LeavePolicyList = new LeavePolicy[]
         {
-            new LeavePolicy() { Name = "Probation", Details = new List<LeavePolicyDetail>() },
-            new LeavePolicy() { Name = "Permanent", Details = new List<LeavePolicyDetail> {  
+            new LeavePolicy() { Name = "Probation", LeavePolicyTypeId = LeavePolicyTypes.Yearly, Details = new List<LeavePolicyDetail>() },
+            new LeavePolicy() { Name = "Permanent", LeavePolicyTypeId = LeavePolicyTypes.Yearly, Details = new List<LeavePolicyDetail> {  
                 new LeavePolicyDetail() { LeaveTypeId = LeaveTypes.Casual, Count = 8 },
                 new LeavePolicyDetail() { LeaveTypeId = LeaveTypes.Sick, Count = 8 },
                 new LeavePolicyDetail() { LeaveTypeId = LeaveTypes.Earned, Count = 8 },
             }},
-            new LeavePolicy() { Name = "After 2 Years" , Details = new List<LeavePolicyDetail> {
+            new LeavePolicy() { Name = "After 2 Years" , LeavePolicyTypeId = LeavePolicyTypes.Yearly, Details = new List<LeavePolicyDetail> {
                 new LeavePolicyDetail() { LeaveTypeId = LeaveTypes.Casual, Count = 8 },
                 new LeavePolicyDetail() { LeaveTypeId = LeaveTypes.Sick, Count = 8 },
                 new LeavePolicyDetail() { LeaveTypeId = LeaveTypes.Earned, Count = 14 },
             }},
         };
 
-        private static CalendarDay[] GetCalendarDays(Setting setting, Calendar[] calendars)
+        private static CalendarDay[] GetCalendarDays(Calendar[] calendars)
         {
             var days = new List<CalendarDay>();
 
             foreach (var calendar in calendars)
             {
-                days.AddRange(calendar.MakeWeekends(setting.Weekends));
+                days.AddRange(calendar.MakeWeekends(calendar.StartDate.Year, calendar.StartDate.Month));
             }
 
             return days.ToArray();
@@ -77,7 +83,6 @@ namespace PulseApp.Data
 
         public static async Task RunAsync(ApplicationDbContext context)
         {
-            await context.AddAsync(Setting);
             await context.AddRangeAsync(DayTypeList);
             await context.AddRangeAsync(AttendanceTypeList);
             await context.AddRangeAsync(LeaveTypeList);
@@ -87,8 +92,9 @@ namespace PulseApp.Data
                 context.SetId(policy.Details);
             }
             await context.AddRangeAsync(context.SetId(LeavePolicyList));
+            await context.AddRangeAsync(CalendarTypeList);
             await context.AddRangeAsync(context.SetId(CalendarList));
-            await context.AddRangeAsync(context.SetId(GetCalendarDays(Setting, CalendarList)));
+            await context.AddRangeAsync(context.SetId(GetCalendarDays(CalendarList)));
             await context.AddRangeAsync(context.SetId(EmployeeList));
             await context.SaveChangesAsync();
         }
