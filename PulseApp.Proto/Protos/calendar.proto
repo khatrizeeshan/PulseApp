@@ -20,8 +20,6 @@ service CalendarManager {
 
   rpc GetOffDays (common.YearMonthRequest) returns (common.DaysResponse);
   rpc GetOffDates (common.DateRangeRequest) returns (common.DatesResponse);
-  rpc GetCalendarId (common.DateRequest) returns (common.IdResponse);
-  rpc GetLastCalendarId (common.EmptyRequest) returns (common.IdResponse);
 
 }
 
@@ -65,6 +63,8 @@ message MarkDayRequest {
 message CalendarProto {
     int32 id = 1;
     string name = 2;
+    common.Date start_date = 3;
+    string weekends = 4;
 }
 
 message DayTypeProto {

@@ -13,17 +13,13 @@
             </div>
 
             <div class="modal-body">
-                <div class="form-group">
-                    <div class="form-group col-md-6">
-                        <label for="start">Start</label>
-                        <input @bind="Start" type="text" class="form-control" id="start" placeholder="start">
-                    </div>
+                <div class="form-group col-md-6">
+                    <label for="firstName">First Name</label>
+                    <input @bind="Current.Name" type="text" class="form-control" id="name" placeholder="Calendar Name">
                 </div>
-                <div class="form-group">
-                    <div class="form-group col-md-6">
-                        <label for="end">End</label>
-                        <input @bind="End" type="text" class="form-control" id="end" placeholder="end">
-                    </div>
+                <div class="form-group col-md-6">
+                    <label for="start">Start</label>
+                    <input @bind="Start" type="text" class="form-control" id="start" placeholder="Start Date">
                 </div>
             </div>
 
@@ -44,8 +40,6 @@
 
     private DateTime Start { get; set; }
 
-    private DateTime End { get; set; }
-
     [Parameter]
     public EventCallback<MouseEventArgs> OnCancelCallback { get; set; }
 
@@ -55,9 +49,7 @@
     protected override async Task OnInitializedAsync()
     {
         Start = Current.StartDate.ToDateTime();
-        End = Current.EndDate.ToDateTime();
     }
-
 
     private void OnCancelModal()
     {
@@ -68,7 +60,7 @@
     private void OnConfirmModal()
     {
         Current.StartDate = Start.ToDate();
-        Current.EndDate = End.ToDate();
+        Current.Weekends = "0000011";
         OnConfirmCallback.InvokeAsync();
     }
 }

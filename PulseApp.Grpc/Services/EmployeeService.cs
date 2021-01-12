@@ -86,20 +86,37 @@ namespace PulseApp.Services
             return new IdResponse { Id = employee.Id };
         }
 
-        //internal async Task<int> GetCalendarIdAsync(int employeeId, DateTime date)
-        //{
-        //    using var db = DbFactory.CreateDbContext();
-        //    var employee = await db.Employees.Where(e => e.Id == employeeId)
-        //                                .Select(EmployeeJoiningDto.Selector)
-        //                                .SingleOrDefaultAsync();
+        internal async Task<int> GetCalendarIdAsync(int employeeId, DateTime date)
+        {
+            using var db = DbFactory.CreateDbContext();
+            var calendarId = await db.EmployeeCalendars.Where(c => c.EmployeeId == employeeId && c.StartDate >= date)
+                                        .Select(c => c.CalendarId)
+                                        .SingleOrDefaultAsync();
 
-        //    if (date < employee.Joining) {
-        //        throw new Exception("No calendar found for selected employee.");
-        //    }
+            if (calendarId == 0)
+            {
+                throw new Exception("No calendar found for selected employee.");
+            }
 
-        //    var service = Provider.GetRequiredService<CalendarService>();
-        //    return await service.GetCalendarId(date);
-        //}
+
+            return calendarId;
+        }
+
+        internal async Task<int> GetLeavePolicyIdAsync(int employeeId, DateTime date)
+        {
+            using var db = DbFactory.CreateDbContext();
+            var leavePolicyId = await db.EmployeeLeavePolicies.Where(c => c.EmployeeId == employeeId && c.StartDate >= date)
+                                        .Select(c => c.LeavePolicyId)
+                                        .SingleOrDefaultAsync();
+
+            if (leavePolicyId == 0)
+            {
+                throw new Exception("No leave policy found for selected employee.");
+            }
+
+
+            return leavePolicyId;
+        }
 
     }
 

@@ -36,7 +36,7 @@ else
                 <option value="0">[Choose]</option>
                 @foreach (var calendar in CalendarList)
                 {
-                    <option value="@calendar.Id">@calendar.ToRangeString()</option>
+                    <option value="@calendar.Id">@calendar.Name</option>
                 }
             </select>
         </div>

@@ -196,38 +196,6 @@ namespace PulseApp.Services
             return response;
         }
 
-        //public override async Task<IdResponse> GetCalendarId(DateRequest request, ServerCallContext context)
-        //{
-        //    return new IdResponse() { Id = await GetCalendarId(request.Date.ToDateTime()) };
-        //}
-
-        //internal async Task<int> GetCalendarId(DateTime date)
-        //{
-        //    using var db = DbFactory.CreateDbContext();
-        //    var calendarId = await db.Calendars
-        //            .Where(a => date >= a.StartDate && date <= a.EndDate)
-        //            .Select(c => c.Id)
-        //            .SingleOrDefaultAsync();
-
-        //    if (calendarId == 0)
-        //    {
-        //        throw new Exception("No calendar found for selected date.");
-        //    }
-
-        //    return calendarId;
-        //}
-
-        //public override async Task<IdResponse> GetLastCalendarId(EmptyRequest request, ServerCallContext context)
-        //{
-        //    using var db = DbFactory.CreateDbContext();
-        //    var calendarId = await db.Calendars
-        //                        .OrderByDescending(c => c.StartDate)
-        //                        .Select(c => c.Id)
-        //                        .FirstOrDefaultAsync();
-
-        //    return new IdResponse() { Id = calendarId };
-        //}
-
     }
 
     public class CalendarDto

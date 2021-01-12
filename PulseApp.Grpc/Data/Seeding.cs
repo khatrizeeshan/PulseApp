@@ -10,6 +10,8 @@ namespace PulseApp.Data
 {
     public class Seeding
     {
+        private static readonly Setting Setting = new Setting() { Id = 0, Weekends = "1000000" };
+
         private static readonly DayType[] DayTypeList = new DayType[]
         {
             new DayType() { Id = DayTypes.Weekend, Code = "W", Name = "Weekend" },
@@ -27,7 +29,7 @@ namespace PulseApp.Data
 
         private static readonly Calendar[] CalendarList = new Calendar[]
         {
-            new Calendar() { Name = "Saturday, Sunday Calendar", Weekends = "1000000", StartDate = new DateTime(2019, 7, 1) },
+            new Calendar() { Name = "Saturday, Sunday Calendar", Weekends = Setting.Weekends, StartDate = new DateTime(2019, 7, 1) },
         };
 
         private static readonly LeavePolicy[] LeavePolicyList = new LeavePolicy[]
@@ -81,8 +83,33 @@ namespace PulseApp.Data
             new Employee() { FirstName = "Nasir", LastName = "Khatri", Email = "nasir.khatri@gmail.com", Joining = new DateTime(2020, 11, 07) },
         };
 
+        private static EmployeeCalendar[] GetEmployeeCalendars(Employee[] employees, Calendar[] calendars)
+        {
+            var employeeCalendars = new List<EmployeeCalendar>();
+
+            foreach (var employee in employees)
+            {
+                employeeCalendars.Add(new EmployeeCalendar() { EmployeeId = employee.Id, CalendarId = calendars[0].Id, StartDate = employee.Joining });
+            }
+
+            return employeeCalendars.ToArray();
+        }
+
+        private static EmployeeLeavePolicy[] GetEmployeeLeavePolicies(Employee[] employees, LeavePolicy[] leavePolicies)
+        {
+            var employeeLeavePolicies = new List<EmployeeLeavePolicy>();
+
+            foreach (var employee in employees)
+            {
+                employeeLeavePolicies.Add(new EmployeeLeavePolicy() { EmployeeId = employee.Id, LeavePolicyId = leavePolicies[0].Id, StartDate = employee.Joining });
+            }
+
+            return employeeLeavePolicies.ToArray();
+        }
+
         public static async Task RunAsync(ApplicationDbContext context)
         {
+            await context.AddAsync(Setting);
             await context.AddRangeAsync(DayTypeList);
             await context.AddRangeAsync(AttendanceTypeList);
             await context.AddRangeAsync(LeaveTypeList);
@@ -96,6 +123,8 @@ namespace PulseApp.Data
             await context.AddRangeAsync(context.SetId(CalendarList));
             await context.AddRangeAsync(context.SetId(GetCalendarDays(CalendarList)));
             await context.AddRangeAsync(context.SetId(EmployeeList));
+            await context.AddRangeAsync(context.SetId(GetEmployeeCalendars(EmployeeList, CalendarList)));
+            await context.AddRangeAsync(context.SetId(GetEmployeeLeavePolicies(EmployeeList, LeavePolicyList)));
             await context.SaveChangesAsync();
         }
     }

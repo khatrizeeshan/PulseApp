@@ -73,11 +73,6 @@ namespace PulseApp.Helpers
             return new DateTime(date.Year, date.Month, date.Day);
         }
 
-        public static string ToRangeString(this CalendarProto proto)
-        {
-            return $"{proto.StartDate.ToDateTime().ToShortDateString()} - {proto.EndDate.ToDateTime().ToShortDateString()}";
-        }
-
     }
 }
 

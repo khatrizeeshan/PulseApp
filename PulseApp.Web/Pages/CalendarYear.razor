@@ -24,7 +24,7 @@ else
             <select @bind="SelectedCalendarId" @bind:event="oninput" @onchange="OnChangeCalendar" class="form-control" id="calendar">
                 @foreach (var calendar in CalendarList)
                 {
-                    <option value="@calendar.Id">@calendar.ToRangeString()</option>
+                    <option value="@calendar.Id">@calendar.Name</option>
                 }
             </select>
             <button @onclick="OnShowAddModal" type="button" class="btn btn-link">Add</button>
@@ -32,7 +32,7 @@ else
     </div>
     <div class="d-flex justify-content-end">
         <button @onclick="OnPrevious" type="button" class="btn btn-link">Previous</button>
-        <h2 class="text-right">@SelectedCalendar.ToRangeString()</h2>
+        <h2 class="text-right">@SelectedCalendar.Name</h2>
         <button @onclick="OnNext" type="button" class="btn btn-link">Next</button>
     </div>
 
@@ -136,7 +136,7 @@ else
 
     private async Task Get()
     {
-        var request = new IdRequest() { Id = Id };
+        var request = new IdDateRequest() { Id = Id, Date = DateTime.Today.ToDate() };
         CalendarDays = await CalendarService.GetCalendarDaysAsync(request);
     }
 
@@ -156,7 +156,7 @@ else
 
     private async Task AddCalendar(CalendarProto calendar)
     {
-        var reqeuest = new CalendarAddRequest() { StartDate = calendar.StartDate, EndDate = calendar.EndDate };
+        var reqeuest = new CalendarAddRequest() { Name = calendar.Name, StartDate = calendar.StartDate };
         var response = await CalendarService.AddCalendarAsync(reqeuest);
         await GetCalendars();
         await Go(response.Id);
@@ -201,17 +201,10 @@ else
     private void OnShowAddModal()
     {
         var start = DateTimeHelper.FirstDay();
-        if (CalendarList.Any())
-        {
-            start = CalendarList.Max(c => c.EndDate.ToDateTime()).AddDays(1);
-        }
-
-        var end = start.AddYears(1).AddDays(-1);
-
+        
         CurrentCalendar = new CalendarProto
         {
             StartDate = start.ToDate(),
-            EndDate = end.ToDate(),
         };
 
         ShowAddModal = true;
