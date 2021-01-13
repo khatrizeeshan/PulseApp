@@ -8,18 +8,24 @@
     <div class="modal-dialog">
         <div class="modal-content">
             <div class="modal-header">
-                <h4 class="modal-title">Mark Attendance</h4>
+                <h4 class="modal-title">Calendar</h4>
                 <button type="button" class="close" @onclick="OnCancelModal">&times;</button>
             </div>
 
             <div class="modal-body">
                 <div class="form-group col-md-6">
-                    <label for="firstName">First Name</label>
+                    <label for="firstName">Name</label>
                     <input @bind="Current.Name" type="text" class="form-control" id="name" placeholder="Calendar Name">
                 </div>
                 <div class="form-group col-md-6">
                     <label for="start">Start</label>
-                    <input @bind="Start" type="text" class="form-control" id="start" placeholder="Start Date">
+                    <DateEdit TValue="DateTime" @bind-Date="@start" />
+                    @*<input @bind="Start" type="text" class="form-control" id="start" placeholder="Start Date">*@
+                </div>
+                <div class="form-group col-md-6">
+                    <label for="start">Weekends</label>
+                    <Weekdays Days="Current.Weekends"></Weekdays>
+                    @*<input @bind="Start" type="text" class="form-control" id="start" placeholder="Start Date">*@
                 </div>
             </div>
 
@@ -38,7 +44,7 @@
     [Parameter]
     public CalendarProto Current { get; set; }
 
-    private DateTime Start { get; set; }
+    private DateTime start;
 
     [Parameter]
     public EventCallback<MouseEventArgs> OnCancelCallback { get; set; }
@@ -48,7 +54,7 @@
 
     protected override async Task OnInitializedAsync()
     {
-        Start = Current.StartDate.ToDateTime();
+        start = Current.StartDate.ToDateTime();
     }
 
     private void OnCancelModal()
@@ -59,7 +65,7 @@
 
     private void OnConfirmModal()
     {
-        Current.StartDate = Start.ToDate();
+        Current.StartDate = start.ToDate();
         Current.Weekends = "0000011";
         OnConfirmCallback.InvokeAsync();
     }

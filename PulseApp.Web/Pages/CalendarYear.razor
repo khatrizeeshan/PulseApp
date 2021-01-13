@@ -27,7 +27,6 @@ else
                     <option value="@calendar.Id">@calendar.Name</option>
                 }
             </select>
-            <button @onclick="OnShowAddModal" type="button" class="btn btn-link">Add</button>
         </div>
     </div>
     <div class="d-flex justify-content-end">
@@ -87,10 +86,6 @@ else
         <CalendarDay Current="CurrentDay" OnCancelCallback="OnCancelDayModal" OnConfirmCallback="OnConfirmDayModal"></CalendarDay>
     }
 
-    @if (ShowAddModal)
-    {
-        <Calendar Current="CurrentCalendar" OnCancelCallback="OnCancelAddModal" OnConfirmCallback="OnConfirmAddModal"></Calendar>
-    }
 }
 
 @code {
@@ -113,11 +108,8 @@ else
 
     private bool ShowCalendarDayModal { get; set; }
 
-    private bool ShowAddModal { get; set; }
-
     private MarkDayRequest CurrentDay { get; set; }
 
-    private CalendarProto CurrentCalendar { get; set; }
 
     protected override async Task OnInitializedAsync()
     {
@@ -154,13 +146,7 @@ else
         await Get();
     }
 
-    private async Task AddCalendar(CalendarProto calendar)
-    {
-        var reqeuest = new CalendarAddRequest() { Name = calendar.Name, StartDate = calendar.StartDate };
-        var response = await CalendarService.AddCalendarAsync(reqeuest);
-        await GetCalendars();
-        await Go(response.Id);
-    }
+    
 
     private async Task OnNext()
     {
@@ -197,30 +183,6 @@ else
         await Go(id);
     }
 
-
-    private void OnShowAddModal()
-    {
-        var start = DateTimeHelper.FirstDay();
-        
-        CurrentCalendar = new CalendarProto
-        {
-            StartDate = start.ToDate(),
-        };
-
-        ShowAddModal = true;
-    }
-
-    private void OnCancelAddModal()
-    {
-        CurrentCalendar = null;
-        ShowAddModal = false;
-    }
-
-    private async Task OnConfirmAddModal()
-    {
-        await AddCalendar(CurrentCalendar);
-        ShowAddModal = false;
-    }
 
     private void OnShowDayModal(int calendarId, int day, int month, int year, int? dayTypeId = null, string comments = null)
     {

@@ -204,6 +204,8 @@ namespace PulseApp.Services
         {
             Id = e.Id,
             Name = e.Name,
+            StartDate = e.StartDate.ToDate(),
+            Weekends = e.Weekends,
         };
     }
 

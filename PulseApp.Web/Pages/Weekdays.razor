@@ -1,0 +1,34 @@
+﻿@using PulseApp.Helpers
+
+@for (var i = 0; i < daysArray.Length; i++)
+{
+    <tr>
+        <td>@DaysHelper.GetName(i)</td>
+        <th scope="row">
+            <div class="custom-control custom-checkbox">
+                <input type="checkbox" @bind="@daysArray[i]" />
+            </div>
+        </th>
+    </tr>
+}
+
+@code {
+
+    [Parameter]
+    public string Days { get; set; }
+
+    private bool[] daysArray = new bool[] {false, false, false, false, false, false, false};
+
+    protected override async Task OnInitializedAsync()
+    {
+        var array = Days.ToCharArray();
+        var on = '1';
+        for (int i = 0; i < 7; i++)
+        {
+            if (array[i] == on)
+            {
+                daysArray[i] = true;
+            }
+        }
+    }
+}

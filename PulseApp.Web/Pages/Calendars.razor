@@ -1,0 +1,134 @@
+﻿@page "/calendars"
+
+@using PulseApp.Protos
+@using PulseApp.Helpers
+
+@inject NavigationManager NavigationManager
+@inject CalendarManager.CalendarManagerClient CalendarService
+
+<h1>Calendars</h1>
+
+<p>This page list the calendars of the company.</p>
+
+@if (calendars == null)
+{
+    <p><em>Loading...</em></p>
+}
+else
+{
+    <input @oninput="OnFilter" />
+    <button @onclick="OnShowAddModal">Add</button>
+    <table class="table">
+        <thead>
+            <tr>
+                <th>Name</th>
+                <th>Start Date</th>
+                <th>Weekends</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var calendar in calendars)
+            {
+                <tr>
+                    <td>@calendar.Name</td>
+                    <td>@calendar.StartDate.ToDateTime().ToShortDateString()</td>
+                    <td>@DaysHelper.GetWeekendNames(calendar.Weekends)</td>
+                    <td>
+                        <button type="button" @onclick="(() => OnEdit(calendar.Id))">Edit</button>
+                        <button type="button" @onclick="(() => OnDelete(calendar.Id))">Delete</button>
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+
+
+    @if (ShowAddModal)
+    {
+        <Calendar Current="CurrentCalendar" OnCancelCallback="OnCancelAddModal" OnConfirmCallback="OnConfirmAddModal"></Calendar>
+    }
+}
+
+@code {
+    private CalendarProto[] _all;
+    private CalendarProto[] calendars;
+
+    private CalendarProto CurrentCalendar { get; set; }
+
+    private bool ShowAddModal { get; set; }
+
+    protected override async Task OnInitializedAsync()
+    {
+        await GetAll();
+    }
+
+    private async Task GetAll()
+    {
+        var request = new EmptyRequest();
+        var response = await CalendarService.GetCalendarsAsync(request);
+        _all = response.Calendars.ToArray();
+        calendars = _all;
+    }
+
+    private void OnFilter(ChangeEventArgs e)
+    {
+        var filter = e.Value.ToString();
+        if (string.IsNullOrWhiteSpace(filter))
+        {
+            calendars = _all;
+        }
+        else
+        {
+            calendars = _all.Where(e => e.Name.Contains(filter)).ToArray();
+        }
+    }
+
+    private async Task OnDelete(int id)
+    {
+        var request = new IdRequest() { Id = id };
+        await CalendarService.DeleteCalendarAsync(request);
+        await GetAll();
+    }
+
+    private void OnEdit(int id)
+    {
+        GoAtCalendar(id);
+    }
+
+    private void OnShowAddModal()
+    {
+        var start = DateTimeHelper.FirstDay();
+
+        CurrentCalendar = new CalendarProto
+        {
+            StartDate = start.ToDate(),
+        };
+
+        ShowAddModal = true;
+    }
+
+    private void OnCancelAddModal()
+    {
+        CurrentCalendar = null;
+        ShowAddModal = false;
+    }
+
+    private async Task OnConfirmAddModal()
+    {
+        await AddCalendar(CurrentCalendar);
+        ShowAddModal = false;
+    }
+
+    private async Task AddCalendar(CalendarProto calendar)
+    {
+        var reqeuest = new CalendarAddRequest() { Name = calendar.Name, StartDate = calendar.StartDate };
+        var response = await CalendarService.AddCalendarAsync(reqeuest);
+        GoAtCalendar(response.Id);
+    }
+
+    private void GoAtCalendar(int id)
+    {
+        NavigationManager.NavigateTo($"/calendars/{id}");
+    }
+}
