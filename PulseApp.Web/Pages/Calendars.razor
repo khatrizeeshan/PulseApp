@@ -103,6 +103,7 @@ else
         CurrentCalendar = new CalendarProto
         {
             StartDate = start.ToDate(),
+            Weekends = "0000001"
         };
 
         ShowAddModal = true;
@@ -122,8 +123,9 @@ else
 
     private async Task AddCalendar(CalendarProto calendar)
     {
-        var reqeuest = new CalendarAddRequest() { Name = calendar.Name, StartDate = calendar.StartDate };
+        var reqeuest = new CalendarAddRequest() { Name = calendar.Name, StartDate = calendar.StartDate, Weekends = calendar.Weekends };
         var response = await CalendarService.AddCalendarAsync(reqeuest);
+        ShowAddModal = false;
         GoAtCalendar(response.Id);
     }
 

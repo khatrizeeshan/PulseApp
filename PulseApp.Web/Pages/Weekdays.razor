@@ -2,11 +2,14 @@
 
 @for (var i = 0; i < daysArray.Length; i++)
 {
+    var id = "weekday" + i;
+    var weekday = i;
+    var value = daysArray[i];
     <tr>
         <td>@DaysHelper.GetName(i)</td>
         <th scope="row">
             <div class="custom-control custom-checkbox">
-                <input type="checkbox" @bind="@daysArray[i]" />
+                <input id="@id" type="checkbox" @bind="value" @onclick="@(async (e) => await ToggleDay(weekday))" />
             </div>
         </th>
     </tr>
@@ -17,9 +20,23 @@
     [Parameter]
     public string Days { get; set; }
 
+    [Parameter]
+    public EventCallback<string> DaysChanged { get; set; }
+
     private bool[] daysArray = new bool[] {false, false, false, false, false, false, false};
 
     protected override async Task OnInitializedAsync()
+    {
+        FillArray();
+    }
+
+    private async Task ToggleDay(int weekday)
+    {
+        daysArray[weekday] = !daysArray[weekday];
+        await FillDays();
+    }
+
+    private void FillArray()
     {
         var array = Days.ToCharArray();
         var on = '1';
@@ -31,4 +48,11 @@
             }
         }
     }
+
+    private async Task FillDays()
+    {
+        var days = string.Concat(daysArray.Select(i => i ? "1" : "0"));
+        await DaysChanged.InvokeAsync(days);
+    }
+
 }
