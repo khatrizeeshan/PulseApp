@@ -12,34 +12,64 @@
 
 @if (employee == null)
 {
-<p><em>Loading...</em></p>
+    <p><em>Loading...</em></p>
 }
 else
 {
-<form>
-    <div class="form-row">
-        <div class="form-group col-md-6">
-            <label for="firstName">First Name</label>
-            <input @bind="employee.FirstName" type="text" class="form-control" id="firstName" placeholder="First Name">
+    <form>
+        <div class="form-row">
+            <div class="form-group col-md-6">
+                <label for="firstName">First Name</label>
+                <input @bind="employee.FirstName" type="text" class="form-control" id="firstName" placeholder="First Name">
+            </div>
+            <div class="form-group col-md-6">
+                <label for="lastName">Last Name</label>
+                <input @bind="employee.LastName" type="text" class="form-control" id="lastName" placeholder="Last Name">
+            </div>
         </div>
-        <div class="form-group col-md-6">
-            <label for="lastName">Last Name</label>
-            <input @bind="employee.LastName" type="text" class="form-control" id="lastName" placeholder="Last Name">
+        <div class="form-row">
+            <div class="form-group col-md-6">
+                <label for="email">Email</label>
+                <input @bind="employee.Email" type="email" class="form-control" id="email" placeholder="Email">
+            </div>
+            <div class="form-group col-md-6">
+                <label for="joining">Joining</label>
+                <DateEdit TValue="DateTime" @bind-Date="@joining" />
+                @*<input @bind="joining" type="text" class="form-control" id="joining" placeholder="Joining">*@
+            </div>
         </div>
-    </div>
-    <div class="form-row">
-        <div class="form-group col-md-6">
-            <label for="email">Email</label>
-            <input @bind="employee.Email" type="email" class="form-control" id="email" placeholder="Email">
-        </div>
-        <div class="form-group col-md-6">
-            <label for="joining">Joining</label>
-            <DateEdit TValue="DateTime" @bind-Date="@joining" />
-            @*<input @bind="joining" type="text" class="form-control" id="joining" placeholder="Joining">*@
-        </div>
-    </div>
-    <button type="button" @onclick="OnSave" class="btn btn-primary">Save</button>
-</form>
+        @if (Id > 0)
+        {
+            <hr />
+            <div class="form-row">
+                Calendars
+                <table class="table">
+                    <tr>
+                        <th>Start Date</th>
+                        <th>Calendar</th>
+                    </tr>
+                    @foreach (var calendar in employee.Calendars)
+                    {
+                        <tr>
+                            <td>@calendar.StartDate.ToDateTime().ToShortDateString()</td>
+                            <td>@calendar.Name</td>
+                        </tr>
+                    }
+                </table>
+            </div>
+        }
+        else
+        {
+            <div class="form-row">
+                <div class="form-group col-md-6">
+                    <label for="email">Calendar</label>
+                    <CalendarSelect @bind-Selected="@calendarId"></CalendarSelect>
+                </div>
+            </div>
+        }
+
+        <button type="button" @onclick="OnSave" class="btn btn-primary">Save</button>
+    </form>
 }
 
 @code {
@@ -48,8 +78,12 @@ else
 
     private DateTime joining;
 
+    private int calendarId;
+
+
     [Parameter]
     public int Id { get; set; }
+
 
     protected override async Task OnInitializedAsync()
     {
@@ -72,6 +106,8 @@ else
         }
     }
 
+
+
     private async Task OnSave()
     {
         if (Id > 0)
@@ -81,7 +117,7 @@ else
         }
         else
         {
-            var request = new EmployeeAddRequest() { FirstName = employee.FirstName, LastName = employee.LastName, Email = employee.Email, Joining = joining.ToDate() };
+            var request = new EmployeeAddRequest() { FirstName = employee.FirstName, LastName = employee.LastName, Email = employee.Email, Joining = joining.ToDate(), CalendarId = calendarId };
             var response = await EmployeeService.AddEmployeeAsync(request);
             GoAtEmployee(response.Id);
         }

@@ -27,10 +27,10 @@ namespace PulseApp.Data
             new LeavePolicyType() { Id = LeavePolicyTypes.HalfYearly, Code = "H", Name = "HalfYearly" },
         };
 
-        private static readonly Calendar[] CalendarList = new Calendar[]
-        {
-            new Calendar() { Name = "Saturday, Sunday Calendar", Weekends = Setting.Weekends, StartDate = new DateTime(2019, 7, 1) },
-        };
+        //private static readonly Calendar[] CalendarList = new Calendar[]
+        //{
+        //    new Calendar() { Name = "Saturday, Sunday Calendar", Weekends = Setting.Weekends, StartDate = new DateTime(2019, 7, 1) },
+        //};
 
         private static readonly LeavePolicy[] LeavePolicyList = new LeavePolicy[]
         {
@@ -47,17 +47,17 @@ namespace PulseApp.Data
             }},
         };
 
-        private static CalendarDay[] GetCalendarDays(Calendar[] calendars)
-        {
-            var days = new List<CalendarDay>();
+        //private static CalendarDay[] GetCalendarDays(Calendar[] calendars)
+        //{
+        //    var days = new List<CalendarDay>();
 
-            foreach (var calendar in calendars)
-            {
-                days.AddRange(calendar.MakeWeekends(calendar.StartDate.Year, calendar.StartDate.Month));
-            }
+        //    foreach (var calendar in calendars)
+        //    {
+        //        days.AddRange(calendar.MakeWeekends(calendar.StartDate.Year, calendar.StartDate.Month));
+        //    }
 
-            return days.ToArray();
-        }
+        //    return days.ToArray();
+        //}
 
         private static readonly AttendanceType[] AttendanceTypeList = new AttendanceType[]
         {
@@ -83,17 +83,17 @@ namespace PulseApp.Data
             new Employee() { FirstName = "Nasir", LastName = "Khatri", Email = "nasir.khatri@gmail.com", Joining = new DateTime(2020, 11, 07) },
         };
 
-        private static EmployeeCalendar[] GetEmployeeCalendars(Employee[] employees, Calendar[] calendars)
-        {
-            var employeeCalendars = new List<EmployeeCalendar>();
+        //private static EmployeeCalendar[] GetEmployeeCalendars(Employee[] employees, Calendar[] calendars)
+        //{
+        //    var employeeCalendars = new List<EmployeeCalendar>();
 
-            foreach (var employee in employees)
-            {
-                employeeCalendars.Add(new EmployeeCalendar() { EmployeeId = employee.Id, CalendarId = calendars[0].Id, StartDate = employee.Joining });
-            }
+        //    foreach (var employee in employees)
+        //    {
+        //        employeeCalendars.Add(new EmployeeCalendar() { EmployeeId = employee.Id, CalendarId = calendars[0].Id, StartDate = employee.Joining });
+        //    }
 
-            return employeeCalendars.ToArray();
-        }
+        //    return employeeCalendars.ToArray();
+        //}
 
         private static EmployeeLeavePolicy[] GetEmployeeLeavePolicies(Employee[] employees, LeavePolicy[] leavePolicies)
         {
@@ -120,10 +120,10 @@ namespace PulseApp.Data
             }
             await context.AddRangeAsync(context.SetId(LeavePolicyList));
             await context.AddRangeAsync(CalendarTypeList);
-            await context.AddRangeAsync(context.SetId(CalendarList));
-            await context.AddRangeAsync(context.SetId(GetCalendarDays(CalendarList)));
+            //await context.AddRangeAsync(context.SetId(CalendarList));
+            //await context.AddRangeAsync(context.SetId(GetCalendarDays(CalendarList)));
             await context.AddRangeAsync(context.SetId(EmployeeList));
-            await context.AddRangeAsync(context.SetId(GetEmployeeCalendars(EmployeeList, CalendarList)));
+            //await context.AddRangeAsync(context.SetId(GetEmployeeCalendars(EmployeeList, CalendarList)));
             await context.AddRangeAsync(context.SetId(GetEmployeeLeavePolicies(EmployeeList, LeavePolicyList)));
             await context.SaveChangesAsync();
         }

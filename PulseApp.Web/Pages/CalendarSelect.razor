@@ -1,0 +1,44 @@
+﻿@using PulseApp.Helpers
+@using PulseApp.Protos
+
+@inject CalendarManager.CalendarManagerClient CalendarService
+
+<Select TValue="int" SelectedValue="@Selected" SelectedValueChanged="@OnSelectedValueChanged">
+    @if (calendars != null)
+    {
+        <SelectItem Value="0">[Choose]</SelectItem>
+        @foreach (var item in calendars)
+        {
+            <SelectItem Value="@item.Id">@item.Name</SelectItem>
+        }
+    }
+</Select>
+
+@code {
+
+    private CalendarProto[] calendars;
+
+    [Parameter]
+    public int Selected { get; set; }
+
+    [Parameter]
+    public EventCallback<int> SelectedChanged { get; set; }
+
+    protected override async Task OnInitializedAsync()
+    {
+        await Get();
+    }
+
+    private async Task Get()
+    {
+        var response = await CalendarService.GetCalendarsAsync(new EmptyRequest());
+        calendars = response.Calendars.ToArray();
+    }
+
+    private async Task OnSelectedValueChanged(int value)
+    {
+        await this.SelectedChanged.InvokeAsync(value);
+    }
+
+
+}

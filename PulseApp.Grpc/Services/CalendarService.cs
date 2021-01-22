@@ -266,7 +266,7 @@ namespace PulseApp.Services
 
                 for (int i = 0; i <= 31; i++)
                 {
-                    var day = days.FirstOrDefault(a => a.Month == date.Month && a.Day == i);
+                    var day = days.FirstOrDefault(a => a.Year == date.Year && a.Month == date.Month && a.Day == i);
                     if (day != null)
                     {
                         var proto = new CalendarDayProto()

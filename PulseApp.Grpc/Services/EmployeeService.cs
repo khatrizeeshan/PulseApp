@@ -6,6 +6,7 @@ using PulseApp.Helpers;
 using PulseApp.Models;
 using PulseApp.Protos;
 using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Linq.Expressions;
 using System.Threading.Tasks;
@@ -45,6 +46,13 @@ namespace PulseApp.Services
                 .Select(EmployeeDto.Selector)
                 .SingleOrDefaultAsync(e => e.Id == request.Id);
 
+            var calendars = await db.EmployeeCalendars
+                .Where(e => e.EmployeeId == request.Id)
+                .Select(EmployeeCalendarDto.Selector)
+                .ToArrayAsync();
+
+            employee.Calendars.Add(calendars);
+
             return new EmployeeResponse() { Employee = employee };
         }
 
@@ -80,7 +88,12 @@ namespace PulseApp.Services
             employee.Email = request.Email;
             employee.Joining = request.Joining.ToDateTime();
             db.SetId(employee);
+
+            var calendar = new EmployeeCalendar() { EmployeeId = employee.Id, CalendarId = request.CalendarId, StartDate = employee.Joining };
+            db.SetId(calendar);
+
             await db.Employees.AddAsync(employee);
+            await db.EmployeeCalendars.AddAsync(calendar);
             await db.SaveChangesAsync();
 
             return new IdResponse { Id = employee.Id };
@@ -89,9 +102,10 @@ namespace PulseApp.Services
         internal async Task<int> GetCalendarIdAsync(int employeeId, DateTime date)
         {
             using var db = DbFactory.CreateDbContext();
-            var calendarId = await db.EmployeeCalendars.Where(c => c.EmployeeId == employeeId && c.StartDate >= date)
+            var calendarId = await db.EmployeeCalendars.Where(c => c.EmployeeId == employeeId && c.StartDate <= date)
+                                        .OrderByDescending(c => c.CalendarId)
                                         .Select(c => c.CalendarId)
-                                        .SingleOrDefaultAsync();
+                                        .FirstOrDefaultAsync();
 
             if (calendarId == 0)
             {
@@ -144,6 +158,17 @@ namespace PulseApp.Services
             LastName = e.LastName,
             Email = e.Email,
             Joining = e.Joining.ToDate(),
+        };
+    }
+
+    public class EmployeeCalendarDto
+    {
+        public static Expression<Func<EmployeeCalendar, EmployeeCalendarProto>> Selector = e => new EmployeeCalendarProto
+        {
+            Id = e.Id,
+            CalendarId = e.CalendarId,
+            Name = e.Calendar.Name,
+            StartDate = e.StartDate.ToDate(),
         };
     }
 

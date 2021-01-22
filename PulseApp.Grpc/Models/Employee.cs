@@ -13,8 +13,8 @@ namespace PulseApp.Models
         public string LastName { get; set; }
         public string Email { get; set; }
         public DateTime Joining { get; set; }
-        public ICollection<Timing> Timings { get; set; }
-        public ICollection<Attendance> Attendances { get; set; }
+        public ICollection<EmployeeCalendar> Calendars { get; set; }
+        public ICollection<EmployeeLeavePolicy> LeavePolicies { get; set; }
     }
 
     public class EmployeeCalendar : BaseModel<int>
