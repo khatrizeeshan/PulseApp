@@ -7,8 +7,17 @@ import "Protos/common.proto";
 package leave;
 
 service LeaveManager {
+  
   rpc GetLeaveLedger (LeaveLedgerRequest) returns (LeaveLedgerResponse);
-  rpc GetLeaveTypes (common.EmptyRequest) returns (LeaveTypeResponse);
+  
+  rpc GetLeaveTypes (common.EmptyRequest) returns (LeaveTypesResponse);
+
+  rpc GetLeavePolicies (common.EmptyRequest) returns (LeavePoliciesResponse);
+  rpc GetLeavePolicy (common.IdRequest) returns (LeavePolicyResponse);
+  rpc DeleteLeavePolicy (common.IdRequest) returns (common.EmptyResponse);
+  rpc AddLeavePolicy (LeavePolicyAddRequest) returns (common.IdResponse);
+  rpc UpdateLeavePolicy (LeavePolicyUpdateRequest) returns (common.EmptyResponse);
+
 }
 
 message LeaveLedgerRequest {
@@ -23,7 +32,7 @@ message LeaveLedgerResponse {
     repeated LeaveDateProto leaves = 4;
 }
 
-message LeaveTypeResponse {
+message LeaveTypesResponse {
     repeated LeaveTypeProto leave_types = 1;
  }
 
@@ -31,6 +40,63 @@ message LeaveTypeProto {
     int32 id = 1;
     string code = 2;
     string name = 3;
+}
+
+message LeavePoliciesResponse {
+    repeated LeavePolicyListProto leave_policies = 1;
+}
+
+message LeavePolicyResponse {
+    LeavePolicyProto leave_policy = 1;
+}
+
+message LeavePolicyListProto {
+    int32 id = 1;
+    string name = 2;
+    int32 leave_policy_type_id = 3;
+    string leave_policy_type_name = 4;
+}
+
+message LeavePolicyProto {
+    int32 id = 1;
+    string name = 2;
+    int32 leave_policy_type_id = 3;
+    string leave_policy_type_name = 4;
+    repeated LeavePolicyDetailProto leave_policy_details = 5;
+}
+
+message LeavePolicyDetailProto {
+    int32 id = 1;
+    int32 leave_type_id = 2;
+    string leave_type_name = 3;
+    int32 count = 4;
+    bool forwardable = 5;
+}
+
+message LeavePolicyAddRequest {
+    string name = 1;
+    int32 leave_policy_type_id = 2;
+    repeated LeavePolicyAddDetailProto leave_policy_details = 3;
+}
+
+message LeavePolicyAddDetailProto {
+    int32 leave_type_id = 1;
+    int32 count = 2;
+    bool forwardable = 3;
+}
+
+message LeavePolicyUpdateRequest {
+    int32 id = 1;
+    string name = 2;
+    int32 leave_policy_type_id = 3;
+    repeated LeavePolicyUpdateDetailProto leave_policy_details = 4;
+}
+
+message LeavePolicyUpdateDetailProto {
+    int32 id = 1;
+    int32 leave_type_id = 2;
+    int32 count = 3;
+    bool forwardable = 4;
 }
 
 message LeaveDateProto {

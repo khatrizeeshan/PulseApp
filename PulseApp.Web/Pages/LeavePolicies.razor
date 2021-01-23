@@ -1,0 +1,134 @@
+﻿@page "/leave-policies"
+
+@using PulseApp.Protos
+@using PulseApp.Helpers
+
+@inject NavigationManager NavigationManager
+@inject LeaveManager.LeaveManagerClient LeaveService
+
+<h1>Leave Policies</h1>
+
+<p>This page list the leave policies of the company.</p>
+
+@if (leavePolicies == null)
+{
+    <p><em>Loading...</em></p>
+}
+else
+{
+    <input @oninput="OnFilter" />
+    <button @onclick="OnShowAddModal">Add</button>
+    <table class="table">
+        <thead>
+            <tr>
+                <th>Name</th>
+                <th>Policy Type</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var leavePolicy in leavePolicies)
+            {
+                <tr>
+                    <td>@leavePolicy.Name</td>
+                    <td>@leavePolicy.LeavePolicyTypeName</td>
+                    <td>
+                        <button type="button" @onclick="(() => OnEdit(leavePolicy.Id))">Edit</button>
+                        <button type="button" @onclick="(() => OnDelete(leavePolicy.Id))">Delete</button>
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+
+
+    @*@if (ShowAddModal)
+    {
+        <LeavePolicy Current="CurrentLeavePolicy" OnCancelCallback="OnCancelAddModal" OnConfirmCallback="OnConfirmAddModal"></LeavePolicy>
+    }*@
+}
+
+@code {
+    private LeavePolicyListProto[] _all;
+    private LeavePolicyListProto[] leavePolicies;
+
+    private LeavePolicyProto CurrentLeavePolicy { get; set; }
+
+    private bool ShowAddModal { get; set; }
+
+    protected override async Task OnInitializedAsync()
+    {
+        await GetAll();
+    }
+
+    private async Task GetAll()
+    {
+        var request = new EmptyRequest();
+        var response = await LeaveService.GetLeavePoliciesAsync(request);
+        _all = response.LeavePolicies.ToArray();
+        leavePolicies = _all;
+    }
+
+    private void OnFilter(ChangeEventArgs e)
+    {
+        var filter = e.Value.ToString();
+        if (string.IsNullOrWhiteSpace(filter))
+        {
+            leavePolicies = _all;
+        }
+        else
+        {
+            leavePolicies = _all.Where(e => e.Name.Contains(filter)).ToArray();
+        }
+    }
+
+    private async Task OnDelete(int id)
+    {
+        var request = new IdRequest() { Id = id };
+        await LeaveService.DeleteLeavePolicyAsync(request);
+        await GetAll();
+    }
+
+    private void OnEdit(int id)
+    {
+        GoAtLeavePolicy(id);
+    }
+
+    private void OnShowAddModal()
+    {
+        var start = DateTimeHelper.FirstDay();
+
+        //CurrentLeavePolicy = new LeavePolicyProto
+        //{
+        //    StartDate = start.ToDate(),
+        //    Weekends = "0000001"
+        //};
+
+        ShowAddModal = true;
+    }
+
+    private void OnCancelAddModal()
+    {
+        CurrentLeavePolicy = null;
+        ShowAddModal = false;
+    }
+
+    private async Task OnConfirmAddModal()
+    {
+        await AddLeavePolicy(CurrentLeavePolicy);
+        ShowAddModal = false;
+    }
+
+    private async Task AddLeavePolicy(LeavePolicyProto leavePolicy)
+    {
+        //var reqeuest = new LeavePolicyAddRequest() { Name = leavePolicy.Name, StartDate = leavePolicy.StartDate, Weekends = leavePolicy.Weekends };
+        //var response = await LeavePolicyService.AddLeavePolicyAsync(reqeuest);
+        //ShowAddModal = false;
+        //GoAtLeavePolicy(response.Id);
+    }
+
+    private void GoAtLeavePolicy(int id)
+    {
+        NavigationManager.NavigateTo($"/leave-policies/{id}");
+    }
+}
