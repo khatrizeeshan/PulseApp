@@ -122,15 +122,40 @@ namespace PulseApp.Services
                 return response;
             }
 
+            var yearStartDate = GetYearStartDate(calendar, request.Date.ToDateTime());
+
+            if(yearStartDate > DateTime.Today.AddYears(3)) //TODO: Time Zone Handling
+            {
+                throw new Exception("Calendar is only available for three future years.");
+            }
+
+            var (from, to) = DateTimeHelper.YearRange(yearStartDate.Year, yearStartDate.Month);
+
+            var count = await db.CalendarDays
+                    .Where(a => a.CalendarId == request.Id && a.Date >= from && a.Date <= to)
+                    .CountAsync();
+
+            if(count == 0 && calendar.Weekends.Contains('1'))
+            {
+                var days = calendar.MakeWeekends(yearStartDate.Year, yearStartDate.Month);
+                db.SetId(days);
+                await db.CalendarDays.AddRangeAsync(days);
+                await db.SaveChangesAsync();
+            }
+
             var calendarDays = await db.CalendarDays
-                    .Where(a => a.CalendarId == request.Id)
-                    .Select(CalendarDayDto.Selector)
-                    .ToArrayAsync();
+                .Where(a => a.CalendarId == request.Id && a.Date >= from && a.Date <= to)
+                .Select(CalendarDayDto.Selector)
+                .ToArrayAsync();
 
-            var (start, end) = DateTimeHelper.YearRange(request.Date.Year, request.Date.Month);
-
-            response.Fill(calendarDays, start, end);
+            response.Fill(calendarDays, from, to);
             return response;
+        }
+
+        private DateTime GetYearStartDate(Calendar calendar, DateTime date)
+        {
+            var year = calendar.StartDate.Month >= date.Month ? date.Year : date.Year - 1;
+            return new DateTime(year, calendar.StartDate.Month, 1);
         }
 
         public override async Task<EmptyResponse> MarkDay(MarkDayRequest request, ServerCallContext context)

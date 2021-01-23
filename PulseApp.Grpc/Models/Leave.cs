@@ -24,6 +24,7 @@ namespace PulseApp.Models
         public int LeaveTypeId { get; set; }
         public LeaveType LeaveType { get; set; }
         public int Count { get; set; }
+        public bool Forwardable { get; set; }
     }
 
     public class Leave : BaseModel<int>

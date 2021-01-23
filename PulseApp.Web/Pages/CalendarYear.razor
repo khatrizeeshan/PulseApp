@@ -93,8 +93,9 @@ else
     [Parameter]
     public int Id { get; set; }
 
-    [Parameter]
-    public int Year { get; set; }
+    private DateTime Date { get; set; }
+
+    private DateTime SelectedCalendarStartDate { get; set; }
 
     private CalendarProto[] CalendarList { get; set; }
 
@@ -103,8 +104,6 @@ else
     private string SelectedCalendarId { get; set; }
 
     private CalendarProto SelectedCalendar { get; set; }
-
-    private int SelectedCalendarIndex { get; set; }
 
     private bool ShowCalendarDayModal { get; set; }
 
@@ -115,20 +114,22 @@ else
     {
         await GetCalendars();
         await LoadCurrent();
-
-        SelectedCalendarId = Id.ToString();
-        SelectedCalendar = CalendarList.Single(c => c.Id == Id);
-        SelectedCalendarIndex = Array.IndexOf(CalendarList, SelectedCalendar);
     }
 
     private async Task LoadCurrent()
     {
+        Date = DateTime.Today;
+
+        SelectedCalendarId = Id.ToString();
+        SelectedCalendar = CalendarList.Single(c => c.Id == Id);
+        SelectedCalendarStartDate = SelectedCalendar.StartDate.ToDateTime();
+
         await Get();
     }
 
     private async Task Get()
     {
-        var request = new IdDateRequest() { Id = Id, Date = DateTime.Today.ToDate() };
+        var request = new IdDateRequest() { Id = Id, Date = Date.ToDate() };
         CalendarDays = await CalendarService.GetCalendarDaysAsync(request);
     }
 
@@ -146,34 +147,25 @@ else
         await Get();
     }
 
-    
-
     private async Task OnNext()
     {
-        if (SelectedCalendarIndex < CalendarList.Length - 1)
-        {
-            this.SelectedCalendarIndex = SelectedCalendarIndex + 1;
-            await Go(CalendarList[SelectedCalendarIndex].Id);
-        }
+        Date = Date.AddYears(1);
+        await Get();
     }
 
     private async Task OnPrevious()
     {
-        if (SelectedCalendarIndex > 0)
+        if (Date.AddYears(-1) > SelectedCalendarStartDate)
         {
-            this.SelectedCalendarIndex = SelectedCalendarIndex - 1;
-            await Go(CalendarList[SelectedCalendarIndex].Id);
+            Date = Date.AddYears(-1);
+            await Get();
         }
-
     }
 
     private async Task Go(int id)
     {
         NavigationManager.NavigateTo($"/calendars/{id}");
         Id = id;
-        SelectedCalendarId = Id.ToString();
-        SelectedCalendar = CalendarList.Single(c => c.Id == Id);
-        SelectedCalendarIndex = Array.IndexOf(CalendarList, SelectedCalendar);
         await LoadCurrent();
     }
 
