@@ -15,7 +15,6 @@ namespace PulseApp.Services
 {
     public class EmployeeService : EmployeeManager.EmployeeManagerBase
     {
-
         public EmployeeService(IServiceProvider provider, IDbContextFactory<ApplicationDbContext> dbFactory)
         {
             this.DbFactory = dbFactory;
@@ -52,6 +51,13 @@ namespace PulseApp.Services
                 .ToArrayAsync();
 
             employee.Calendars.Add(calendars);
+
+            var policies = await db.EmployeeLeavePolicies
+                .Where(e => e.EmployeeId == request.Id)
+                .Select(EmployeeLeavePolicyDto.Selector)
+                .ToArrayAsync();
+
+            employee.LeavePolicies.Add(policies);
 
             return new EmployeeResponse() { Employee = employee };
         }
@@ -92,8 +98,12 @@ namespace PulseApp.Services
             var calendar = new EmployeeCalendar() { EmployeeId = employee.Id, CalendarId = request.CalendarId, StartDate = employee.Joining };
             db.SetId(calendar);
 
+            var policy = new EmployeeLeavePolicy() { EmployeeId = employee.Id, LeavePolicyId = request.LeavePolicyId, StartDate = employee.Joining };
+            db.SetId(policy);
+
             await db.Employees.AddAsync(employee);
             await db.EmployeeCalendars.AddAsync(calendar);
+            await db.EmployeeLeavePolicies.AddAsync(policy);
             await db.SaveChangesAsync();
 
             return new IdResponse { Id = employee.Id };
@@ -168,6 +178,17 @@ namespace PulseApp.Services
             Id = e.Id,
             CalendarId = e.CalendarId,
             Name = e.Calendar.Name,
+            StartDate = e.StartDate.ToDate(),
+        };
+    }
+
+    public class EmployeeLeavePolicyDto
+    {
+        public static Expression<Func<EmployeeLeavePolicy, EmployeeLeavePolicyProto>> Selector = e => new EmployeeLeavePolicyProto
+        {
+            Id = e.Id,
+            LeavePolicyId = e.LeavePolicyId,
+            Name = e.LeavePolicy.Name,
             StartDate = e.StartDate.ToDate(),
         };
     }

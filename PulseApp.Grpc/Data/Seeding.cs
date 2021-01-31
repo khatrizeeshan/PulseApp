@@ -75,13 +75,13 @@ namespace PulseApp.Data
             new LeaveType() { Id = LeaveTypes.Paid, Code = "P", Name = "Paid", IsDefault = true },
         };
 
-        private static readonly Employee[] EmployeeList = new Employee[]
-        {
-            new Employee() { FirstName = "Zeeshan", LastName = "Khatri", Email = "zeeshan.khatri@gmail.com", Joining = new DateTime(2020, 06, 07) },
-            new Employee() { FirstName = "Danish", LastName = "Khatri", Email = "danish.khatri@gmail.com", Joining = new DateTime(2020, 07, 07) },
-            new Employee() { FirstName = "Shadab", LastName = "Khatri", Email = "shadab.khatri@gmail.com", Joining = new DateTime(2020, 08, 07) },
-            new Employee() { FirstName = "Nasir", LastName = "Khatri", Email = "nasir.khatri@gmail.com", Joining = new DateTime(2020, 11, 07) },
-        };
+        //private static readonly Employee[] EmployeeList = new Employee[]
+        //{
+        //    new Employee() { FirstName = "Zeeshan", LastName = "Khatri", Email = "zeeshan.khatri@gmail.com", Joining = new DateTime(2020, 06, 07) },
+        //    new Employee() { FirstName = "Danish", LastName = "Khatri", Email = "danish.khatri@gmail.com", Joining = new DateTime(2020, 07, 07) },
+        //    new Employee() { FirstName = "Shadab", LastName = "Khatri", Email = "shadab.khatri@gmail.com", Joining = new DateTime(2020, 08, 07) },
+        //    new Employee() { FirstName = "Nasir", LastName = "Khatri", Email = "nasir.khatri@gmail.com", Joining = new DateTime(2020, 11, 07) },
+        //};
 
         //private static EmployeeCalendar[] GetEmployeeCalendars(Employee[] employees, Calendar[] calendars)
         //{
@@ -122,9 +122,9 @@ namespace PulseApp.Data
             await context.AddRangeAsync(CalendarTypeList);
             //await context.AddRangeAsync(context.SetId(CalendarList));
             //await context.AddRangeAsync(context.SetId(GetCalendarDays(CalendarList)));
-            await context.AddRangeAsync(context.SetId(EmployeeList));
+            //await context.AddRangeAsync(context.SetId(EmployeeList));
             //await context.AddRangeAsync(context.SetId(GetEmployeeCalendars(EmployeeList, CalendarList)));
-            await context.AddRangeAsync(context.SetId(GetEmployeeLeavePolicies(EmployeeList, LeavePolicyList)));
+            //await context.AddRangeAsync(context.SetId(GetEmployeeLeavePolicies(EmployeeList, LeavePolicyList)));
             await context.SaveChangesAsync();
         }
     }
