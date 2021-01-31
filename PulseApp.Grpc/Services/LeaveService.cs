@@ -8,7 +8,7 @@ using System.Threading.Tasks;
 using PulseApp.Protos;
 using PulseApp.Helpers;
 using Grpc.Core;
-
+using System.Collections.Generic;
 
 namespace PulseApp.Services
 {
@@ -47,8 +47,9 @@ namespace PulseApp.Services
                     .SingleOrDefaultAsync(e => e.Id == request.Id);
 
             var details = await db.LeavePolicyDetails
+                    .Where(e => e.LeavePolicyId == request.Id)
                     .Select(LeavePoliciesDto.DetailSelector)
-                    .SingleOrDefaultAsync(e => e.Id == request.Id);
+                    .ToArrayAsync();
 
             leavePolicy.LeavePolicyDetails.Add(details);
             
@@ -75,9 +76,14 @@ namespace PulseApp.Services
                 Name = request.Name,
                 LeavePolicyTypeId = request.LeavePolicyTypeId,
                 Details = request.LeavePolicyDetails
-                    .Select(d => new LeavePolicyDetail() { LeaveTypeId = d.LeaveTypeId, Count = d.Count, Forwardable = d.Forwardable }).ToArray()
+                    .Select(d => new LeavePolicyDetail() { LeaveTypeId = d.LeaveTypeId, Count = d.Count, Forwardable = d.Forwardable, Cashable = d.Cashable }).ToArray()
                 
             };
+
+            foreach (var detail in leavePolicy.Details)
+            {
+                this.Validate(detail);
+            }
 
             db.SetId(leavePolicy);
             db.SetId(leavePolicy.Details);
@@ -88,9 +94,76 @@ namespace PulseApp.Services
             return new IdResponse() { Id = leavePolicy.Id };
         }
 
-        public override Task<EmptyResponse> UpdateLeavePolicy(LeavePolicyUpdateRequest request, ServerCallContext context)
+        public override async Task<EmptyResponse> UpdateLeavePolicy(LeavePolicyUpdateRequest request, ServerCallContext context)
         {
-            return base.UpdateLeavePolicy(request, context);
+            using var db = DbFactory.CreateDbContext();
+            var existing = await db.LeavePolicies.SingleOrDefaultAsync(e => e.Id == request.Id);
+            var existingDetails = await db.LeavePolicyDetails.Where(e => e.LeavePolicyId == request.Id).ToArrayAsync();
+
+            existing.Name = request.Name;
+            existing.LeavePolicyTypeId = request.LeavePolicyTypeId;
+            db.LeavePolicies.Update(existing);
+
+            var details = request.LeavePolicyDetails.ToArray();
+            var grouped = details.GroupBy(d => d.LeaveTypeId);
+
+            var replaced = new List<int>();
+            foreach (var group in grouped)
+            {
+                var existingDetail = existingDetails.SingleOrDefault(d => d.LeaveTypeId == group.Key);
+                if (existingDetail != null)
+                {
+                    replaced.Add(existingDetail.Id);
+                    existingDetail.Count = group.Sum(d => d.Count);
+                    existingDetail.Forwardable = group.Sum(d => d.Forwardable);
+                    existingDetail.Cashable = group.Sum(d => d.Cashable);
+                    this.Validate(existingDetail);
+                    db.LeavePolicyDetails.Update(existingDetail);
+                }
+                else
+                {
+                    var detail = new LeavePolicyDetail()
+                    {
+                        LeavePolicyId = request.Id,
+                        LeaveTypeId = group.Key,
+                        Count = group.Sum(d => d.Count),
+                        Forwardable = group.Sum(d => d.Forwardable),
+                        Cashable = group.Sum(d => d.Cashable),
+                    };
+                    this.Validate(detail);
+                    db.SetId(detail);
+                    await db.LeavePolicyDetails.AddAsync(detail);
+                }
+            }
+
+            var removed = existingDetails.Where(d => !replaced.Contains(d.Id));
+            db.RemoveRange(removed);
+
+            await db.SaveChangesAsync();
+
+            return new EmptyResponse();
+        }
+
+        private void Validate(LeavePolicyDetail detail)
+        {
+            if(detail.Count < detail.Forwardable + detail.Cashable)
+            {
+                throw new Exception("Total of fordwable and cashable leaves must be less than or equal to total leaves.");
+            }
+        }
+
+        public override async Task<LeavePolicyTypesResponse> GetLeavePolicyTypes(EmptyRequest request, ServerCallContext context)
+        {
+            using var db = DbFactory.CreateDbContext();
+
+            var types = await db.LeavePolicyTypes
+                .Select(LeavePolicyTypeDto.Selector)
+                .ToArrayAsync();
+
+            var response = new LeavePolicyTypesResponse();
+            response.LeavePolicyTypes.Add(types);
+
+            return response;
         }
 
         public override async Task<LeaveLedgerResponse> GetLeaveLedger(LeaveLedgerRequest request, ServerCallContext context)
@@ -196,6 +269,17 @@ namespace PulseApp.Services
     public class LeaveTypeDto
     {
         public static Expression<Func<LeaveType, LeaveTypeProto>> Selector = e => new LeaveTypeProto
+        {
+            Id = e.Id,
+            Code = e.Code,
+            Name = e.Name,
+        };
+
+    }
+
+    public class LeavePolicyTypeDto
+    {
+        public static Expression<Func<LeavePolicyType, LeavePolicyTypeProto>> Selector = e => new LeavePolicyTypeProto
         {
             Id = e.Id,
             Code = e.Code,

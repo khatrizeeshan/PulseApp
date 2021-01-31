@@ -1,0 +1,62 @@
+﻿@using PulseApp.Helpers
+@using PulseApp.Protos
+
+@inject LeaveManager.LeaveManagerClient LeaveService
+
+
+<Select TValue="int" SelectedValue="@SelectedValue" SelectedValueChanged="@OnSelectedValueChanged">
+    <SelectItem Value="0">[Choose]</SelectItem>
+    @if (Items != null)
+    {
+        @foreach (var item in Items)
+        {
+            <SelectItem Value="@item.Id">@item.Name</SelectItem>
+        }
+    }
+</Select>
+
+@code {
+
+    [Parameter]
+    public LeaveTypeProto[] Items { get; set; }
+
+    [Parameter]
+    public int SelectedValue { get; set; }
+
+    [Parameter]
+    public EventCallback<int> SelectedValueChanged { get; set; }
+
+    [Parameter]
+    public EventCallback<LeaveTypeProto> SelectedChanged { get; set; }
+
+    protected override async Task OnInitializedAsync()
+    {
+        if(Items == null)
+        {
+            await Get();
+        }
+    }
+
+    private async Task Get()
+    {
+        var response = await LeaveService.GetLeaveTypesAsync(new EmptyRequest());
+        Items = response.LeaveTypes.ToArray();
+    }
+
+    private async Task OnSelectedValueChanged(int value)
+    {
+        var selected = Items.Single(t => t.Id == value);
+        var tasks = new Task[]
+        {
+            this.SelectedValueChanged.InvokeAsync(value),
+            this.SelectedChanged.InvokeAsync(selected)
+        };
+        await Task.WhenAll(tasks);
+    }
+
+    private string GetName(int value)
+    {
+        return Items.SingleOrDefault(i => i.Id == value)?.Name;
+    }
+
+}

@@ -1,0 +1,133 @@
+﻿@page "/leave-policies/{id:int}"
+
+@using PulseApp.Protos
+@using PulseApp.Helpers
+
+@inject NavigationManager NavigationManager
+@inject LeaveManager.LeaveManagerClient LeaveService
+
+<h1>Employees</h1>
+
+<p>This page list the policys of the company.</p>
+
+@if (policy == null)
+{
+    <p><em>Loading...</em></p>
+}
+else
+{
+    <form>
+        <div class="form-row">
+            <div class="form-group col-md-6">
+                <label for="name">Name</label>
+                <input @bind="policy.Name" type="text" class="form-control" id="Name" placeholder="Name">
+            </div>
+            <div class="form-group col-md-6">
+                <label for="type">Type</label>
+                <LeavePolicyTypeSelect @bind-Selected="@policy.LeavePolicyTypeId"></LeavePolicyTypeSelect>
+            </div>
+        </div>
+
+        <DataGrid TItem="LeavePolicyDetailProto"
+                  Data="@details"
+                  @bind-SelectedRow="@selectedDetail"
+                  Editable="true">
+            <DataGridColumn TItem="LeavePolicyDetailProto" Field="@nameof(LeavePolicyDetailProto.LeaveTypeId)" Caption="Leave Type" Editable="true">
+                <DisplayTemplate>
+                    @GetLeaveTypeName(context)
+                </DisplayTemplate>
+                <EditTemplate>
+                    <LeaveTypeSelect Items="GetLeaveTypes(context)" SelectedValue="@((int)((CellEditContext)context).CellValue)" SelectedValueChanged="@(v=>((CellEditContext)context).CellValue=v)"></LeaveTypeSelect>
+                </EditTemplate>
+            </DataGridColumn>
+            <DataGridNumericColumn TItem="LeavePolicyDetailProto" Field="@nameof(LeavePolicyDetailProto.Count)" Caption="Count" Editable="true" />
+            <DataGridNumericColumn TItem="LeavePolicyDetailProto" Field="@nameof(LeavePolicyDetailProto.Forwardable)" Caption="Forwardable" Editable="true" />
+            <DataGridNumericColumn TItem="LeavePolicyDetailProto" Field="@nameof(LeavePolicyDetailProto.Cashable)" Caption="Cashable" Editable="true" />
+            <DataGridCommandColumn TItem="LeavePolicyDetailProto" />
+
+        </DataGrid>
+        <button type="button" @onclick="OnSave" class="btn btn-primary">Save</button>
+    </form>
+}
+
+@code {
+
+    private LeavePolicyProto policy;
+
+    private LeaveTypeProto[] leaveTypes;
+
+    private LeavePolicyDetailProto selectedDetail;
+
+    private List<LeavePolicyDetailProto> details;
+
+    [Parameter]
+    public int Id { get; set; }
+
+    protected override async Task OnInitializedAsync()
+    {
+        await GetLeaveTypes();
+        await Get();
+    }
+
+    private async Task Get()
+    {
+        if (Id > 0)
+        {
+            var request = new IdRequest() { Id = Id };
+            var response = await LeaveService.GetLeavePolicyAsync(request);
+            policy = response.LeavePolicy;
+            details = policy.LeavePolicyDetails.ToList();
+        }
+        else
+        {
+            policy = new LeavePolicyProto();
+            details = new List<LeavePolicyDetailProto>();
+        }
+    }
+
+    private async Task GetLeaveTypes()
+    {
+        var response = await LeaveService.GetLeaveTypesAsync(new EmptyRequest());
+        leaveTypes = response.LeaveTypes.ToArray();
+    }
+
+    private async Task OnSave()
+    {
+        if (Id > 0)
+        {
+            var request = new LeavePolicyUpdateRequest() { Id = Id, Name = policy.Name, LeavePolicyTypeId = policy.LeavePolicyTypeId };
+            request.LeavePolicyDetails.Add(details);
+            await LeaveService.UpdateLeavePolicyAsync(request);
+        }
+        else
+        {
+            var request = new LeavePolicyAddRequest() { Name = policy.Name, LeavePolicyTypeId = policy.LeavePolicyTypeId };
+            request.LeavePolicyDetails.Add(details);
+            var response = await LeaveService.AddLeavePolicyAsync(request);
+            GoAtLeavePolicy(response.Id);
+        }
+    }
+
+    private void GoAtLeavePolicy(int id)
+    {
+        NavigationManager.NavigateTo($"/leave-policies/{id}");
+    }
+
+    private string GetLeaveTypeName(LeavePolicyDetailProto detail)
+    {
+        var name = detail?.LeaveTypeName;
+        var id = detail?.LeaveTypeId;
+        if (id.HasValue && string.IsNullOrEmpty(name))
+        {
+            name = leaveTypes.SingleOrDefault(t => t.Id == id)?.Name;
+        }
+        return name;
+    }
+
+    private LeaveTypeProto[] GetLeaveTypes(CellEditContext context)
+    {
+        var alreadySelected = details.Select(d => d.LeaveTypeId);
+        return leaveTypes.Where(t => !alreadySelected.Contains(t.Id) || t.Id == (int)context.CellValue).ToArray();
+    }
+}
+

@@ -27,6 +27,7 @@ namespace PulseApp.Data
         public DbSet<Calendar> Calendars { get; set; }
         public DbSet<CalendarDay> CalendarDays { get; set; }
         public DbSet<DayType> DayTypes { get; set; }
+        public DbSet<LeavePolicyType> LeavePolicyTypes { get; set; }
         public DbSet<LeavePolicy> LeavePolicies { get; set; }
         public DbSet<LeavePolicyDetail> LeavePolicyDetails { get; set; }
         public DbSet<Leave> Leaves { get; set; }
