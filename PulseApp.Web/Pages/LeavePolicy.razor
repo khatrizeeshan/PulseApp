@@ -44,7 +44,6 @@ else
             <DataGridNumericColumn TItem="LeavePolicyDetailProto" Field="@nameof(LeavePolicyDetailProto.Forwardable)" Caption="Forwardable" Editable="true" />
             <DataGridNumericColumn TItem="LeavePolicyDetailProto" Field="@nameof(LeavePolicyDetailProto.Cashable)" Caption="Cashable" Editable="true" />
             <DataGridCommandColumn TItem="LeavePolicyDetailProto" />
-
         </DataGrid>
         <button type="button" @onclick="OnSave" class="btn btn-primary">Save</button>
     </form>
@@ -85,12 +84,6 @@ else
         }
     }
 
-    private async Task GetLeaveTypes()
-    {
-        var response = await LeaveService.GetLeaveTypesAsync(new EmptyRequest());
-        leaveTypes = response.LeaveTypes.ToArray();
-    }
-
     private async Task OnSave()
     {
         if (Id > 0)
@@ -104,13 +97,20 @@ else
             var request = new LeavePolicyAddRequest() { Name = policy.Name, LeavePolicyTypeId = policy.LeavePolicyTypeId };
             request.LeavePolicyDetails.Add(details);
             var response = await LeaveService.AddLeavePolicyAsync(request);
-            GoAtLeavePolicy(response.Id);
+            await GoAtLeavePolicy(response.Id);
         }
     }
 
-    private void GoAtLeavePolicy(int id)
+    private async Task GoAtLeavePolicy(int id)
     {
         NavigationManager.NavigateTo($"/leave-policies/{id}");
+        await Get();
+    }
+
+    private async Task GetLeaveTypes()
+    {
+        var response = await LeaveService.GetLeaveTypesAsync(new EmptyRequest());
+        leaveTypes = response.LeaveTypes.ToArray();
     }
 
     private string GetLeaveTypeName(LeavePolicyDetailProto detail)

@@ -177,7 +177,7 @@ namespace PulseApp.Services
         {
             Id = e.Id,
             CalendarId = e.CalendarId,
-            Name = e.Calendar.Name,
+            CalendarName = e.Calendar.Name,
             StartDate = e.StartDate.ToDate(),
         };
     }
@@ -188,7 +188,7 @@ namespace PulseApp.Services
         {
             Id = e.Id,
             LeavePolicyId = e.LeavePolicyId,
-            Name = e.LeavePolicy.Name,
+            LeavePolicyName = e.LeavePolicy.Name,
             StartDate = e.StartDate.ToDate(),
         };
     }

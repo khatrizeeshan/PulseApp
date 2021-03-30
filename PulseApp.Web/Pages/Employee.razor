@@ -2,9 +2,12 @@
 
 @using PulseApp.Protos
 @using PulseApp.Helpers
+@using PulseApp.VMs
+@using System.Linq 
 
 @inject NavigationManager NavigationManager
 @inject EmployeeManager.EmployeeManagerClient EmployeeService
+@inject CalendarManager.CalendarManagerClient CalendarService
 
 <h1>Employees</h1>
 
@@ -16,88 +19,105 @@
 }
 else
 {
-<form>
-    <div class="form-row">
-        <div class="form-group col-md-6">
-            <label for="firstName">First Name</label>
-            <input @bind="employee.FirstName" type="text" class="form-control" id="firstName" placeholder="First Name">
-        </div>
-        <div class="form-group col-md-6">
-            <label for="lastName">Last Name</label>
-            <input @bind="employee.LastName" type="text" class="form-control" id="lastName" placeholder="Last Name">
-        </div>
-    </div>
-    <div class="form-row">
-        <div class="form-group col-md-6">
-            <label for="email">Email</label>
-            <input @bind="employee.Email" type="email" class="form-control" id="email" placeholder="Email">
-        </div>
-        <div class="form-group col-md-6">
-            <label for="joining">Joining</label>
-            <DateEdit TValue="DateTime" @bind-Date="@joining" />
-        </div>
-    </div>
-    @if (Id > 0)
-    {
-        <hr />
-        <div class="form-row">
-            Calendars
-            <table class="table">
-                <tr>
-                    <th>Start Date</th>
-                    <th>Calendar</th>
-                </tr>
-                @foreach (var calendar in employee.Calendars)
-                {
-                    <tr>
-                        <td>@calendar.StartDate.ToDateTime().ToShortDateString()</td>
-                        <td>@calendar.Name</td>
-                    </tr>
-                }
-            </table>
-        </div>
-
-        <hr />
-        <div class="form-row">
-            Leave Policies
-            <table class="table">
-                <tr>
-                    <th>Start Date</th>
-                    <th>Leave Policy</th>
-                </tr>
-                @foreach (var policy in employee.LeavePolicies)
-                {
-                    <tr>
-                        <td>@policy.StartDate.ToDateTime().ToShortDateString()</td>
-                        <td>@policy.Name</td>
-                    </tr>
-                }
-            </table>
-        </div>
-    }
-    else
-    {
+    <form>
         <div class="form-row">
             <div class="form-group col-md-6">
-                <label for="email">Calendar</label>
-                <CalendarSelect @bind-Selected="@calendarId"></CalendarSelect>
+                <label for="firstName">First Name</label>
+                <input @bind="employee.FirstName" type="text" class="form-control" id="firstName" placeholder="First Name">
+            </div>
+            <div class="form-group col-md-6">
+                <label for="lastName">Last Name</label>
+                <input @bind="employee.LastName" type="text" class="form-control" id="lastName" placeholder="Last Name">
             </div>
         </div>
         <div class="form-row">
             <div class="form-group col-md-6">
-                <label for="email">Leave Policy</label>
-                <LeavePolicySelect @bind-SelectedValue="@leavePolicyId"></LeavePolicySelect>
+                <label for="email">Email</label>
+                <input @bind="employee.Email" type="email" class="form-control" id="email" placeholder="Email">
+            </div>
+            <div class="form-group col-md-6">
+                <label for="joining">Joining</label>
+                <DateEdit TValue="DateTime" @bind-Date="@joining" />
             </div>
         </div>
-    }
+        @if (Id > 0)
+        {
+            <hr />
+            <DataGrid TItem="EmployeeCalendarVM"
+                      Data="@employeeCalendars"
+                      @bind-SelectedRow="@selectedCalendar"
+                      Editable="true">
+                <DataGridColumn TItem="EmployeeCalendarVM" Field="@nameof(EmployeeCalendarVM.CalendarId)" Caption="Calendar" Editable="true">
+                    <DisplayTemplate>
+                        @GetCalendarName(context)
+                    </DisplayTemplate>
+                    <EditTemplate>
+                        <CalendarSelect Items="calendars" SelectedValue="@((int)((CellEditContext)context).CellValue)" SelectedValueChanged="@(v=>((CellEditContext)context).CellValue=v)"></CalendarSelect>
+                    </EditTemplate>
+                </DataGridColumn>
+                <DataGridDateColumn TItem="EmployeeCalendarVM" Field="@nameof(EmployeeCalendarVM.StartDate)" Caption="Start Date" Editable="true" />
+                <DataGridCommandColumn TItem="EmployeeCalendarVM" />
+            </DataGrid>
+            @*<div class="form-row">
+                Calendars
+                <table class="table">
+                    <tr>
+                        <th>Start Date</th>
+                        <th>Calendar</th>
+                    </tr>
+                    @foreach (var calendar in employee.Calendars)
+                    {
+                        <tr>
+                            <td>@calendar.StartDate.ToDateTime().ToShortDateString()</td>
+                            <td>@calendar.CalendarName</td>
+                        </tr>
+                    }
+                </table>
+            </div>*@
 
-    <button type="button" @onclick="OnSave" class="btn btn-primary">Save</button>
-</form>
+            <hr />
+            <div class="form-row">
+                Leave Policies
+                <table class="table">
+                    <tr>
+                        <th>Start Date</th>
+                        <th>Leave Policy</th>
+                    </tr>
+                    @foreach (var policy in employee.LeavePolicies)
+                    {
+                        <tr>
+                            <td>@policy.StartDate.ToDateTime().ToShortDateString()</td>
+                            <td>@policy.LeavePolicyName</td>
+                        </tr>
+                    }
+                </table>
+            </div>
+        }
+        else
+        {
+            <div class="form-row">
+                <div class="form-group col-md-6">
+                    <label for="email">Calendar</label>
+                    <CalendarSelect @bind-SelectedValue="@calendarId"></CalendarSelect>
+                </div>
+            </div>
+            <div class="form-row">
+                <div class="form-group col-md-6">
+                    <label for="email">Leave Policy</label>
+                    <LeavePolicySelect @bind-SelectedValue="@leavePolicyId"></LeavePolicySelect>
+                </div>
+            </div>
+        }
+
+        <button type="button" @onclick="OnSave" class="btn btn-primary">Save</button>
+    </form>
 }
 
 @code {
 
     private EmployeeProto employee;
+
+    private List<EmployeeCalendarVM> employeeCalendars;
 
     private DateTime joining;
 
@@ -105,6 +125,9 @@ else
 
     private int leavePolicyId;
 
+    private CalendarProto[] calendars;
+
+    private EmployeeCalendarVM selectedCalendar;
 
     [Parameter]
     public int Id { get; set; }
@@ -113,6 +136,7 @@ else
     protected override async Task OnInitializedAsync()
     {
         await Get();
+        await GetCalendars();
     }
 
     private async Task Get()
@@ -122,6 +146,8 @@ else
             var request = new IdRequest() { Id = Id };
             var response = await EmployeeService.GetEmployeeAsync(request);
             employee = response.Employee;
+            employeeCalendars = employee.Calendars.AsQueryable().Select(EmployeeCalendarVM.Selector).ToList();
+
             joining = employee.Joining.ToDateTime();
         }
         else
@@ -130,8 +156,6 @@ else
             joining = DateTime.Today;
         }
     }
-
-
 
     private async Task OnSave()
     {
@@ -144,13 +168,31 @@ else
         {
             var request = new EmployeeAddRequest() { FirstName = employee.FirstName, LastName = employee.LastName, Email = employee.Email, Joining = joining.ToDate(), CalendarId = calendarId, LeavePolicyId = leavePolicyId };
             var response = await EmployeeService.AddEmployeeAsync(request);
-            GoAtEmployee(response.Id);
+            await GoAtEmployee(response.Id);
         }
     }
 
-    private void GoAtEmployee(int id)
+    private async Task GoAtEmployee(int id)
     {
         NavigationManager.NavigateTo($"/employees/{id}");
+        await Get();
+    }
+
+    private async Task GetCalendars()
+    {
+        var response = await CalendarService.GetCalendarsAsync(new EmptyRequest());
+        calendars = response.Calendars.ToArray();
+    }
+
+    private string GetCalendarName(EmployeeCalendarVM detail)
+    {
+        var name = detail?.CalendarName;
+        var id = detail?.CalendarId;
+        if (id.HasValue && string.IsNullOrEmpty(name))
+        {
+            name = calendars.SingleOrDefault(t => t.Id == id)?.Name;
+        }
+        return name;
     }
 }
 

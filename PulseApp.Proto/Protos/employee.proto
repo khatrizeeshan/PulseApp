@@ -54,14 +54,14 @@ message EmployeeProto {
 message EmployeeCalendarProto {
     int32 id = 1;
     int32 calendar_id = 2;
-    string name = 3;
+    string calendar_name = 3;
     common.Date start_date = 4;
 }
 
 message EmployeeLeavePolicyProto {
     int32 id = 1;
     int32 leave_policy_id = 2;
-    string name = 3;
+    string leave_policy_name = 3;
     common.Date start_date = 4;
 }
 
